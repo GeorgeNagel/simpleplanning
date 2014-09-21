@@ -1,11 +1,8 @@
-PERSON_TO_PERSON = "person->person"
-
 ACTIONS = {
     # actor is always taken as one of the values of the actions
     # conditions and effects are specified like name__effect
     "kill": {
         "objects": ["victim"],
-        "type": PERSON_TO_PERSON,
         "preconditions": {
             "victim__alive": True,
         },

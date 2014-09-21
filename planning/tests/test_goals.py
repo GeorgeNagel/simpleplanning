@@ -5,11 +5,11 @@ from planning.goals import generate_goal
 
 class Agent(object):
     def __init__(self, name):
-        self.name = name
+        self._name = name
     alive = True
 
 
-class TestStuff(unittest.TestCase):
+class TestGenerateGoal(unittest.TestCase):
     def test_generate_goal(self):
         batman = Agent('batman')
         objects = [batman]
