@@ -31,8 +31,26 @@ def apply_action(action, agent=None, **objects):
         setattr(obj, attr_name, effect_value)
 
 
+def calculate_effects(action, agent=None, **objects):
+    """Calculate the effects tuple for planning activities."""
+    calculated_effects = {}
+    for action_effect in action['effects']:
+        # Parse the effect condition/value pair
+        obj_name, attr_name = action_effect.split('__')
+        effect_value = action['effects'][action_effect]
+
+        # Find the actual object by name in the objects dict
+        obj = objects[obj_name]
+
+        calculated_effects[(obj, attr_name)] = effect_value
+    return calculated_effects
+
+
 def check_preconditions(action, agent, **objects):
     # Dict of all objects (including the agent)
+    print "Checking preconditions"
+    print "action: %s, agent: %s, objects: %s" % (
+        action, agent, objects)
     all_objects = {'agent': agent}
     all_objects.update(objects)
 
@@ -57,4 +75,5 @@ def check_preconditions(action, agent, **objects):
         if precondition_value != actual_value:
             all_preconditions_met = False
             break
+    print "Preconditions met? %s" % all_preconditions_met
     return all_preconditions_met

@@ -1,8 +1,8 @@
 import unittest
 
 from planning.plans import (
-    select_plan, breadth_first_plan_search, History,
-    _history_satisfies_goal)
+    select_plan, breadth_first_plan_search, PlanHistory,
+    _history_satisfies_goal, _update_history_with_action)
 
 
 class Agent(object):
@@ -10,6 +10,10 @@ class Agent(object):
         self._name = name
     alive = True
     has_sword = False
+
+    def __repr__(self):
+        """Helpful method for using repr() when debugging."""
+        return '<' + self._name + '>'
 
 # Test actions
 get_sword = {
@@ -65,47 +69,67 @@ class TestBreadthFirstPlanSearch(unittest.TestCase):
 
     def test_goal_already_met(self):
         """Ensure that a history is returned when it satisfies the goal."""
-        history = History()
-        history.conditions = [(self.dragon, 'alive', False)]
-        history.actions_performed = [
+        plan_history = PlanHistory()
+        plan_history.conditions = {(self.dragon, 'alive'): False}
+        plan_history.actions_performed = [
             (self.knight, kill, {'victim': self.dragon})
         ]
 
-        selected_history = breadth_first_plan_search(
+        selected_plan_history = breadth_first_plan_search(
             self.knight, self.knight_goal, self.possible_actions,
-            self.objects, [history]
+            self.objects, [plan_history]
         )
-        self.assertEqual(selected_history, history)
+        self.assertEqual(selected_plan_history, plan_history)
 
-    def test_breadth_first_search(self):
+    def test_breadth_first_plan_search(self):
+        """Test the breadth-first plan search algorithm."""
+        # Shortcut so that there is only one action needed
         self.knight.has_sword = True
         selected_history = breadth_first_plan_search(
             self.knight, self.knight_goal, self.possible_actions,
             self.objects, [])
+        print "SELECTED HISTORY: %s" % repr(selected_history)
         self.assertEqual(
             selected_history.actions_performed,
             [(self.knight, kill, {'victim': self.dragon})]
         )
 
 
-class HistorySatisfiesGoalTest(unittest.TestCase):
-    """Test a history that satisfies a goal."""
+class PlanHistorySatisfiesGoalTest(unittest.TestCase):
+    """Test a PlanHistory that satisfies a goal."""
     def test_history_satisfies(self):
         dragon = Agent('dragon')
-        history = History()
-        history.conditions = [(dragon, 'alive', False)]
+        plan_history = PlanHistory()
+        plan_history.conditions = {(dragon, 'alive'): False}
         goal = (dragon, 'alive', False)
         self.assertTrue(
-            _history_satisfies_goal(history, goal)
+            _history_satisfies_goal(plan_history, goal)
         )
 
     def test_history_doesnt_satisfy(self):
-        """Test a history that does not satisfy a goal."""
+        """Test a PlanHistory that does not satisfy a goal."""
         # Are you ever satisfied? No, I'm never satisfied.
         dragon = Agent('dragon')
-        history = History()
-        history.conditions = [(dragon, 'alive', True)]
+        plan_history = PlanHistory()
+        plan_history.conditions = {(dragon, 'alive'): True}
         goal = (dragon, 'alive', False)
         self.assertFalse(
-            _history_satisfies_goal(history, goal)
+            _history_satisfies_goal(plan_history, goal)
+        )
+
+
+class TestUpdatePlanHistoryWithAction(unittest.TestCase):
+    def test_update_history_with_action(self):
+        plan_history = PlanHistory()
+        knight = Agent('Knight')
+        dragon = Agent('Dragon')
+        plan_history.conditions = {(knight, 'alive'): True}
+        _update_history_with_action(
+            plan_history, knight, kill, {'victim': dragon})
+        self.assertEqual(
+            plan_history.conditions,
+            {
+                (knight, 'alive'): True,
+                (dragon, 'alive'): False,
+            }
         )

@@ -1,20 +1,24 @@
 import unittest
 
-from planning.actions import apply_action, check_preconditions
+from planning.actions import (
+    apply_action, check_preconditions, calculate_effects)
 from planning.agent import Agent
+
+
+# Test action
+kill = {
+    'objects': ['victim'],
+    'preconditions': {
+        'victim__alive': True,
+    },
+    'effects': {
+        'victim__alive': False,
+    }
+}
 
 
 class TestActions(unittest.TestCase):
     def setUp(self):
-        self.action = {
-            'objects': ['victim'],
-            'preconditions': {
-                'victim__alive': True,
-            },
-            'effects': {
-                'victim__alive': False,
-            }
-        }
         # Create the test agents
         st_george = Agent('St. George')
         dragon = Agent('Dragon')
@@ -28,12 +32,12 @@ class TestActions(unittest.TestCase):
     def test_check_preconditions_failure(self):
         self.object.alive = False
         result = check_preconditions(
-            self.action, self.agent, victim=self.object)
+            kill, self.agent, victim=self.object)
         self.assertFalse(result)
 
     def test_check_preconditions(self):
         result = check_preconditions(
-            self.action, self.agent, victim=self.object)
+            kill, self.agent, victim=self.object)
         self.assertTrue(result)
 
     def test_check_preconditions_object_mismatch(self):
@@ -41,7 +45,7 @@ class TestActions(unittest.TestCase):
         self.assertRaises(
             ValueError,
             check_preconditions,
-            self.action,
+            kill,
             self.agent,
             test="test"
         )
@@ -56,6 +60,17 @@ class TestActions(unittest.TestCase):
         st_george.alive = True
         dragon.alive = True
 
-        apply_action(self.action, agent=st_george, victim=dragon)
+        apply_action(kill, agent=st_george, victim=dragon)
         self.assertTrue(st_george.alive)
         self.assertFalse(dragon.alive)
+
+
+class TestCalculateEffects(unittest.TestCase):
+    def test_calculate_effects(self):
+        test_agent = Agent('test_agent')
+        test_obj = Agent('test_agent_2')
+        effects = calculate_effects(kill, agent=test_agent, victim=test_obj)
+        self.assertEqual(
+            effects,
+            {(test_obj, 'alive'): False}
+        )
