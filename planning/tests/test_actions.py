@@ -16,6 +16,16 @@ kill = {
     }
 }
 
+suicide = {
+    'objects': [],
+    'preconditions': {
+        'actor__alive': True,
+    },
+    'effects': {
+        'actor__alive': False,
+    }
+}
+
 
 class TestActions(unittest.TestCase):
     def setUp(self):
@@ -26,18 +36,23 @@ class TestActions(unittest.TestCase):
         # Add the test attributes
         st_george.alive = True
         dragon.alive = True
-        self.agent = st_george
+        self.actor = st_george
         self.object = dragon
 
     def test_check_preconditions_failure(self):
         self.object.alive = False
         result = check_preconditions(
-            kill, self.agent, victim=self.object)
+            kill, actor=self.actor, victim=self.object)
         self.assertFalse(result)
 
     def test_check_preconditions(self):
         result = check_preconditions(
-            kill, self.agent, victim=self.object)
+            kill, actor=self.actor, victim=self.object)
+        self.assertTrue(result)
+
+    def test_agent_preconditions(self):
+        result = check_preconditions(
+            suicide, actor=self.actor)
         self.assertTrue(result)
 
     def test_check_preconditions_object_mismatch(self):
@@ -46,7 +61,7 @@ class TestActions(unittest.TestCase):
             ValueError,
             check_preconditions,
             kill,
-            self.agent,
+            actor=self.actor,
             test="test"
         )
 
@@ -60,16 +75,16 @@ class TestActions(unittest.TestCase):
         st_george.alive = True
         dragon.alive = True
 
-        apply_action(kill, agent=st_george, victim=dragon)
+        apply_action(kill, actor=st_george, victim=dragon)
         self.assertTrue(st_george.alive)
         self.assertFalse(dragon.alive)
 
 
 class TestCalculateEffects(unittest.TestCase):
     def test_calculate_effects(self):
-        test_agent = Agent('test_agent')
+        test_actor = Agent('test_agent')
         test_obj = Agent('test_agent_2')
-        effects = calculate_effects(kill, agent=test_agent, victim=test_obj)
+        effects = calculate_effects(kill, actor=test_actor, victim=test_obj)
         self.assertEqual(
             effects,
             {(test_obj, 'alive'): False}

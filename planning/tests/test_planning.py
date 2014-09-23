@@ -13,7 +13,11 @@ class Agent(object):
 
     def __repr__(self):
         """Helpful method for using repr() when debugging."""
-        return '<' + self._name + '>'
+        return (
+            '<' + self._name + '>. has_sword: %s. alive: %s' % (
+                self.has_sword, self.alive
+            )
+        )
 
 # Test actions
 get_sword = {
@@ -88,7 +92,6 @@ class TestBreadthFirstPlanSearch(unittest.TestCase):
         selected_history = breadth_first_plan_search(
             self.knight, self.knight_goal, self.possible_actions,
             self.objects, [])
-        print "SELECTED HISTORY: %s" % repr(selected_history)
         self.assertEqual(
             selected_history.actions_performed,
             [(self.knight, kill, {'victim': self.dragon})]

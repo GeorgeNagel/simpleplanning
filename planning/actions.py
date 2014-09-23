@@ -1,3 +1,5 @@
+from planning.settings import log
+
 ACTIONS = {
     # actor is always taken as one of the values of the actions
     # conditions and effects are specified like name__effect
@@ -13,14 +15,14 @@ ACTIONS = {
 }
 
 
-def apply_action(action, agent=None, **objects):
-    if not check_preconditions(action, agent, **objects):
+def apply_action(action, actor=None, **objects):
+    if not check_preconditions(action, actor=actor, **objects):
         raise ValueError(
             "Preconditions not passed."
         )
 
-    # Dict of all objects (including the agent)
-    all_objects = {'agent': agent}
+    # Dict of all objects (including the actor)
+    all_objects = {'actor': actor}
     all_objects.update(objects)
 
     for effect in action['effects']:
@@ -31,7 +33,7 @@ def apply_action(action, agent=None, **objects):
         setattr(obj, attr_name, effect_value)
 
 
-def calculate_effects(action, agent=None, **objects):
+def calculate_effects(action, actor=None, **objects):
     """Calculate the effects tuple for planning activities."""
     calculated_effects = {}
     for action_effect in action['effects']:
@@ -40,18 +42,20 @@ def calculate_effects(action, agent=None, **objects):
         effect_value = action['effects'][action_effect]
 
         # Find the actual object by name in the objects dict
+        # Include the actor in the list of objects
+        objects.update({'actor': actor})
         obj = objects[obj_name]
 
         calculated_effects[(obj, attr_name)] = effect_value
     return calculated_effects
 
 
-def check_preconditions(action, agent, **objects):
-    # Dict of all objects (including the agent)
-    print "Checking preconditions"
-    print "action: %s, agent: %s, objects: %s" % (
-        action, agent, objects)
-    all_objects = {'agent': agent}
+def check_preconditions(action, actor=None, **objects):
+    # Dict of all objects (including the actor)
+    log.debug("Checking preconditions")
+    log.debug("action: %s, actor: %s, objects: %s" % (
+        action, actor, objects))
+    all_objects = {'actor': actor}
     all_objects.update(objects)
 
     # The object arguments must match those required by the preconditions
@@ -75,5 +79,5 @@ def check_preconditions(action, agent, **objects):
         if precondition_value != actual_value:
             all_preconditions_met = False
             break
-    print "Preconditions met? %s" % all_preconditions_met
+    log.debug("Preconditions met? %s" % all_preconditions_met)
     return all_preconditions_met
