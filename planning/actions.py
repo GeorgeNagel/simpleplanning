@@ -49,6 +49,21 @@ def calculate_effects(action, actor=None, **objects):
         calculated_effects[(obj, attr_name)] = effect_value
     return calculated_effects
 
+def calculate_preconditions(action, actor=None, **objects):
+    """Create the list of preconditions tuples like (obj, attr_name, value)."""
+    all_objects = {'actor': actor}
+    all_objects.update(objects)
+
+    preconditions_tuples = []
+    for precondition in action['preconditions']:
+        # Split the precondition into the object and its attribute
+        obj_name, attr_name = precondition.split("__")
+        obj = all_objects[obj_name]
+        precondition_value = action['preconditions'][precondition]
+        preconditions_tuple = (obj, attr_name, precondition_value)
+        preconditions_tuples.append(preconditions_tuple)
+    return preconditions_tuples
+
 
 def check_preconditions(action, actor=None, **objects):
     # Dict of all objects (including the actor)

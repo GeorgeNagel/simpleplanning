@@ -1,7 +1,8 @@
 import unittest
 
 from planning.actions import (
-    apply_action, check_preconditions, calculate_effects)
+    apply_action, check_preconditions, calculate_effects,
+    calculate_preconditions)
 from planning.agent import Agent
 
 
@@ -80,7 +81,7 @@ class TestActions(unittest.TestCase):
         self.assertFalse(dragon.alive)
 
 
-class TestCalculateEffects(unittest.TestCase):
+class TestCalculate(unittest.TestCase):
     def test_calculate_effects(self):
         test_actor = Agent('test_agent')
         test_obj = Agent('test_agent_2')
@@ -88,4 +89,14 @@ class TestCalculateEffects(unittest.TestCase):
         self.assertEqual(
             effects,
             {(test_obj, 'alive'): False}
+        )
+    def test_calculate_preconditions(self):
+        knight = Agent('knight')
+        dragon = Agent('dragon')
+        preconditions = calculate_preconditions(
+            kill, actor=knight, victim=dragon
+        )
+        self.assertEqual(
+            preconditions,
+            [(dragon, 'alive', True)]
         )
