@@ -3,7 +3,7 @@ import unittest
 from planning.actions import (
     apply_action, check_preconditions, calculate_effects,
     calculate_preconditions)
-from planning.agent import Agent
+from planning.agents import Agent
 
 
 # Test action

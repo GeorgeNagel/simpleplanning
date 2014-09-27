@@ -1,5 +1,5 @@
 from planning.actions import apply_action
-from planning.agent import Agent
+from planning.agents import Agent
 from planning.goals import generate_goal
 from planning.plans import select_plan
 

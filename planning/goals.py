@@ -16,12 +16,13 @@ class Goal(object):
             raise ValueError("Must specify obj, attr_name, and value")
         self.name = name
         self._goal_obj = obj
-        self._goal_attr = attr_name
+        self._goal_attr_name = attr_name
         self._goal_value = value
 
-    def is_satisfied(objects):
+    def is_satisfied(self):
         """Check if a goal is currently satisfied."""
-        return True
+        actual_value = getattr(self._goal_obj, self._goal_attr_name)
+        return actual_value == self._goal_value
 
 
 def generate_goal(objects):

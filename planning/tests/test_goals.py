@@ -1,5 +1,6 @@
 import unittest
 
+from planning.agents import Agent
 from planning.goals import Goal, generate_goal
 
 
@@ -42,3 +43,19 @@ class TestGoal(unittest.TestCase):
             Goal,
             'boger'
         )
+
+    def test_is_satisfied(self):
+        """Test a case where a goal is satisfied."""
+        test_obj = Agent("test agent")
+        test_obj.alive = False
+        test_goal = Goal(
+            "victim is dead", obj=test_obj, attr_name='alive', value=False)
+        self.assertTrue(test_goal.is_satisfied())
+
+    def test_not_satisfied(self):
+        """Test a case where a goal is not satisfied."""
+        test_obj = Agent("test agent")
+        test_obj.alive = True
+        test_goal = Goal(
+            "victim is dead", obj=test_obj, attr_name='alive', value=False)
+        self.assertFalse(test_goal.is_satisfied())
