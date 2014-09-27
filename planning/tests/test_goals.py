@@ -1,6 +1,6 @@
 import unittest
 
-from planning.goals import generate_goal
+from planning.goals import Goal, generate_goal
 
 
 class Agent(object):
@@ -31,4 +31,14 @@ class TestGenerateGoal(unittest.TestCase):
                 (batman, 'alive', False),
                 (robin, 'alive', True)
             ]
+        )
+
+
+class TestGoal(unittest.TestCase):
+    def test_init(self):
+        """ValueError raised when keywords not specified."""
+        self.assertRaises(
+            ValueError,
+            Goal,
+            'boger'
         )

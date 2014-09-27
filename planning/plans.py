@@ -110,7 +110,7 @@ def breadth_first_plan_search(
         log.debug("Posssible actions: %s" % possible_previous_actions)
 
         for possible_previous_action in possible_previous_actions:
-            # Spawn a copied version of the plan to modify with the 
+            # Spawn a copied version of the plan to modify with the
             next_possible_plan = possible_plan.copy()
             next_possible_plan.prepend_action(possible_previous_action)
             next_possible_plans.append(next_possible_plan)

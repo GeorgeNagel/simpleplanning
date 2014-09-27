@@ -49,6 +49,7 @@ def calculate_effects(action, actor=None, **objects):
         calculated_effects[(obj, attr_name)] = effect_value
     return calculated_effects
 
+
 def calculate_preconditions(action, actor=None, **objects):
     """Create the list of preconditions tuples like (obj, attr_name, value)."""
     all_objects = {'actor': actor}

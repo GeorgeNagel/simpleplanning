@@ -90,6 +90,7 @@ class TestCalculate(unittest.TestCase):
             effects,
             {(test_obj, 'alive'): False}
         )
+
     def test_calculate_preconditions(self):
         knight = Agent('knight')
         dragon = Agent('dragon')
