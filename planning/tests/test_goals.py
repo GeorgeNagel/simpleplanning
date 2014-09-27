@@ -4,21 +4,14 @@ from planning.agents import Agent
 from planning.goals import Goal, generate_goal
 
 
-class Agent(object):
-    def __init__(self, name):
-        self._name = name
-    alive = True
-
-
 class TestGenerateGoal(unittest.TestCase):
     def test_generate_goal(self):
         batman = Agent('batman')
         objects = [batman]
         goal = generate_goal(objects)
-        self.assertEqual(
-            goal,
-            (batman, 'alive', False)
-        )
+        self.assertEqual(goal._goal_obj, batman)
+        self.assertEqual(goal._goal_attr_name, 'alive')
+        self.assertEqual(goal._goal_value, False)
 
     def test_multiple_objects(self):
         batman = Agent('batman')
@@ -27,11 +20,7 @@ class TestGenerateGoal(unittest.TestCase):
         objects = [batman, robin]
         goal = generate_goal(objects)
         self.assertIn(
-            goal,
-            [
-                (batman, 'alive', False),
-                (robin, 'alive', True)
-            ]
+            goal._goal_obj, [batman, robin]
         )
 
 

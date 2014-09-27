@@ -19,6 +19,23 @@ class Goal(object):
         self._goal_attr_name = attr_name
         self._goal_value = value
 
+    def __repr__(self):
+        return "<%s.%s:%s>" % (
+            self._goal_obj, self._goal_attr_name, self._goal_value
+        )
+
+    @property
+    def goal_obj(self):
+        return self._goal_obj
+
+    @property
+    def goal_attr_name(self):
+        return self._goal_attr_name
+
+    @property
+    def goal_value(self):
+        return self._goal_value
+
     def is_satisfied(self):
         """Check if a goal is currently satisfied."""
         actual_value = getattr(self._goal_obj, self._goal_attr_name)
@@ -32,17 +49,19 @@ def generate_goal(objects):
     Assumes all attributes are boolean.
     """
     log.debug("Generating goal.")
-    possible_tuples = []
+    possible_goals = []
     for obj in objects:
-        public_props = (name for name in dir(obj) if not name.startswith('_'))
-        for public_prop in public_props:
-            value = getattr(obj, public_prop)
-            possible_tuples.append((obj, public_prop, not value))
+        public_properties = [
+            name for name in dir(obj) if not name.startswith('_')
+        ]
+        for public_property in public_properties:
+            value = getattr(obj, public_property)
+            possible_goals.append(
+                Goal(
+                    "random goal", obj=obj,
+                    attr_name=public_property, value=(not value)
+                )
+            )
     # Select a random one.
-    selected_goal_tuple = random.choice(possible_tuples)
-    return selected_goal_tuple
-
-
-def goal_satisfied(goal, objects):
-    """Check if a goal is currently satisfied."""
-    pass
+    selected_goal = random.choice(possible_goals)
+    return selected_goal

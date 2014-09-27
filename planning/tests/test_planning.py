@@ -1,5 +1,6 @@
 import unittest
 
+from planning.goals import Goal
 from planning.plans import (
     PossiblePlan, select_plan, breadth_first_plan_search,
     _create_initial_plan, _actions_that_match_possible_plan,
@@ -48,7 +49,8 @@ class TestPlanning(unittest.TestCase):
         self.knight = Agent('Knight')
         self.dragon = Agent('Dragon')
         self.possible_actions = [kill, get_sword]
-        self.knight_goal = (self.dragon, 'alive', False)
+        self.knight_goal = Goal(
+            'dragon dead', obj=self.dragon, attr_name='alive', value=False)
         self.objects = [self.knight, self.dragon]
 
     def test_planning(self):
@@ -71,7 +73,8 @@ class TestBreadthFirstPlanSearch(unittest.TestCase):
         self.knight = Agent('Knight')
         self.dragon = Agent('Dragon')
         self.possible_actions = [kill, get_sword]
-        self.knight_goal = (self.dragon, 'alive', False)
+        self.knight_goal = Goal(
+            'dragon dead', obj=self.dragon, attr_name='alive', value=False)
         self.objects = [self.knight, self.dragon]
 
     def test_goal_already_met(self):
@@ -109,7 +112,8 @@ class TestPossiblePlan(unittest.TestCase):
         self.knight = Agent('Knight')
         self.dragon = Agent('Dragon')
         self.possible_actions = [kill, get_sword]
-        self.knight_goal = (self.dragon, 'alive', False)
+        self.knight_goal = Goal(
+            'dragon dead', obj=self.dragon, attr_name='alive', value=False)
         self.objects = [self.knight, self.dragon]
 
     def test_create_initial_plan(self):

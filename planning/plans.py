@@ -60,8 +60,7 @@ class PossiblePlan(object):
 def _create_initial_plan(goal):
     """Set up the conditions for the initial_plan."""
     initial_plan = PossiblePlan()
-    goal_obj, goal_attr, goal_value = goal
-    initial_plan.conditions[(goal_obj, goal_attr)] = goal_value
+    initial_plan.conditions[(goal.goal_obj, goal.goal_attr_name)] = goal.goal_value
     return initial_plan
 
 
