@@ -1,46 +1,46 @@
-from planning.actions import apply_action
+from planning.actions import Action
 from planning.agents import Agent
 from planning.goals import generate_goal
 from planning.plans import select_plan
 
 arthur = Agent('Arthur')
-arthur.has_sword = True
+arthur.has_sword = False
 lancelot = Agent('Lancelot')
 lancelot.has_sword = True
 guinevere = Agent("Guinevere")
 guinevere.has_sword = False
 
-kill = {
-    "objects": ["victim"],
-    "preconditions": {
+kill = Action(
+    "kill",
+    preconditions={
         "victim__alive": True,
         "actor__has_sword": True,
     },
-    "effects": {
+    effects={
         "victim__alive": False,
     }
-}
-steal_sword = {
-    "objects": ["victim"],
-    "preconditions": {
+)
+steal_sword = Action(
+    "steal sword",
+    preconditions={
         "victim__has_sword": True,
     },
-    "effects": {
+    effects={
         "victim__has_sword": False,
         "actor__has_sword": True,
     }
-}
-give_sword = {
-    "objects": ["friend"],
-    "preconditions": {
+)
+give_sword = Action(
+    "give sword",
+    preconditions={
         "friend__has_sword": False,
         "actor__has_sword": True,
     },
-    "effects": {
+    effects={
         "friend__has_sword": True,
         "actor__has_sword": False,
     }
-}
+)
 
 agents = [arthur, guinevere, lancelot]
 available_actions = [kill, steal_sword, give_sword]

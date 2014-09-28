@@ -1,5 +1,6 @@
 import unittest
 
+from planning.actions import Action
 from planning.goals import Goal
 from planning.plans import (
     PossiblePlan, select_plan, breadth_first_plan_search,
@@ -22,26 +23,26 @@ class Agent(object):
         )
 
 # Test actions
-get_sword = {
-    "objects": [],
-    "preconditions": {
+get_sword = Action(
+    'get sword',
+    preconditions={
         "actor__has_sword": False,
     },
-    "effects": {
+    effects={
         "actor__has_sword": True,
     }
-}
+)
 
-kill = {
-    "objects": ["victim"],
-    "preconditions": {
+kill = Action(
+    "kill",
+    preconditions={
         "victim__alive": True,
         "actor__has_sword": True,
     },
-    "effects": {
+    effects={
         "victim__alive": False,
     }
-}
+)
 
 
 class TestPlanning(unittest.TestCase):

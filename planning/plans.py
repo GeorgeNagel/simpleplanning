@@ -1,6 +1,6 @@
 from itertools import permutations
 
-from planning.actions import calculate_effects, calculate_preconditions
+from planning.actions import Action
 from planning.settings import log
 
 
@@ -49,8 +49,8 @@ class PossiblePlan(object):
         # Update the conditions for what they would need to be before the
         # action was performed
         actor, action, objects_dict = action_tuple
-        preconditions = calculate_preconditions(
-            action, actor=actor, **objects_dict
+        preconditions = action.calculate_preconditions(
+            actor=actor, **objects_dict
         )
         for precondition in preconditions:
             obj, attr_name, value = precondition
@@ -60,7 +60,9 @@ class PossiblePlan(object):
 def _create_initial_plan(goal):
     """Set up the conditions for the initial_plan."""
     initial_plan = PossiblePlan()
-    initial_plan.conditions[(goal.goal_obj, goal.goal_attr_name)] = goal.goal_value
+    initial_plan.conditions[(goal.goal_obj, goal.goal_attr_name)] = (
+        goal.goal_value
+    )
     return initial_plan
 
 
@@ -94,7 +96,6 @@ def breadth_first_plan_search(
 
     # Check if the goal is satisfied by one of the possible plans.
     for possible_plan in possible_plans:
-        log.debug("Plan: %s" % possible_plan)
         if possible_plan.matches_initial_conditions():
             return possible_plan
 
@@ -132,23 +133,21 @@ def _actions_that_match_possible_plan(
     * actor - The agent planning.
     * objects - A list of possible objects to act upon.
     """
+    log.debug("*** In _actions_that_match_possible_plan()")
     possible_previous_actions = []
     for action in available_actions:
-        log.debug("Action: %s" % action)
-        number_of_objects = len(action['objects'])
+        log.debug("Testing action: %s" % action)
+        number_of_objects = len(action.objects)
         # Permute over all possible objects for the action
-        log.debug("objects: %s" % repr(objects))
-        log.debug("nobjects; %s" % repr(number_of_objects))
         for tuple_of_objects in permutations(objects, number_of_objects):
-            log.debug("TUP: %s" % repr(tuple_of_objects))
+            log.debug("Object permutation: %s" % repr(tuple_of_objects))
             objects_dict = {}
-            for obj_name, obj in zip(action['objects'], tuple_of_objects):
+            for obj_name, obj in zip(action.objects, tuple_of_objects):
                 objects_dict[obj_name] = obj
-            log.debug("OBJ Dict: %s" % objects_dict)
             action_matches = _action_effects_match_possible_plan(
                 action, possible_plan, actor, **objects_dict)
             if action_matches:
-                log.debug("MATCH")
+                log.debug("Action matches.")
                 possible_previous_actions.append(
                     (actor, action, objects_dict)
                 )
@@ -157,10 +156,9 @@ def _actions_that_match_possible_plan(
 
 def _action_effects_match_possible_plan(
         action, possible_plan=None, actor=None, **objects):
-    action_effects = calculate_effects(
-        action, actor=actor, **objects
+    action_effects = action.calculate_effects(
+        actor=actor, **objects
     )
-    log.debug("Actions effects: %s" % action_effects)
     # No effects may contradict conditions of the possible plan
     # but at least some of the effects should match
     all_effects_match = True
