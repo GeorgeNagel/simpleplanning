@@ -24,6 +24,8 @@ steal_sword = Action(
     "steal sword",
     preconditions={
         "victim__has_sword": True,
+        "victim__is_not": 'actor',
+        "actor__has_sword": False
     },
     effects={
         "victim__has_sword": False,
@@ -34,6 +36,7 @@ give_sword = Action(
     "give sword",
     preconditions={
         "friend__has_sword": False,
+        "friend__is_not": 'actor',
         "actor__has_sword": True,
     },
     effects={
@@ -62,7 +65,7 @@ while not game_over:
         print "NEXT ACTION: %s" % repr(next_action)
         _, action, objects_dict = next_action
         # Perform the next action in the plan
-        apply_action(action, actor=agent, **objects_dict)
+        action.apply_action(actor=agent, **objects_dict)
         print "%s performs %s on %s" % (agent, action, objects_dict)
     if any(not agent.alive for agent in agents):
         game_over = True

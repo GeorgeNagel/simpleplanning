@@ -20,7 +20,7 @@ class Goal(object):
         self._goal_value = value
 
     def __repr__(self):
-        return "<%s.%s:%s>" % (
+        return "<%s.%s: %s>" % (
             self._goal_obj, self._goal_attr_name, self._goal_value
         )
 

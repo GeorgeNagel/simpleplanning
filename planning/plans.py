@@ -1,7 +1,8 @@
 from itertools import permutations
 
-from planning.actions import Action
 from planning.settings import log
+
+MAX_SEARCH_DEPTH = 3
 
 
 class PossiblePlan(object):
@@ -12,6 +13,11 @@ class PossiblePlan(object):
     def __init__(self):
         self.conditions = {}
         self.actions_to_perform = []
+
+    def __repr__(self):
+        return "<Possible Plan. Actions:%s, Conditions: %s>" % (
+            self.actions_to_perform, self.conditions
+        )
 
     def matches_initial_conditions(self):
         """Check if a possible plan matches initial conditions.
@@ -67,6 +73,8 @@ def _create_initial_plan(goal):
 
 
 def select_plan(actor=None, goal=None, available_actions=None, objects=None):
+    log.debug("Planning for goal: %s" % repr(goal))
+    log.debug("Planning for actor: %s" % repr(actor))
     selected_plan = breadth_first_plan_search(
         actor=actor, goal=goal, available_actions=available_actions,
         objects=objects)
@@ -76,7 +84,7 @@ def select_plan(actor=None, goal=None, available_actions=None, objects=None):
 
 def breadth_first_plan_search(
         actor=None, goal=None, available_actions=None,
-        objects=None, possible_plans=None):
+        objects=None, possible_plans=None, depth=0):
     """Perform a breadth-first backwards search from the goal.
 
     PARAMETERS:
@@ -90,24 +98,34 @@ def breadth_first_plan_search(
     if any([keywrd is None for keywrd in required_keys]):
         raise ValueError("Inputs must not be None.")
 
+    if depth > MAX_SEARCH_DEPTH:
+        raise ValueError(
+            "Search depth exceeded."
+        )
+
     # Create an empty possible plan if this is the first iteration.
     if not possible_plans:
         possible_plans = [_create_initial_plan(goal)]
 
     # Check if the goal is satisfied by one of the possible plans.
     for possible_plan in possible_plans:
+        log.debug("Checking plan: %s" % possible_plan)
         if possible_plan.matches_initial_conditions():
+            log.debug("Plan match")
             return possible_plan
+        else:
+            log.debug("Plan no match")
 
     next_possible_plans = []
     # Spawn off new possible plans back from existing possible plans
     for possible_plan in possible_plans:
+        # log.debug("Possible Plan: %s" % repr(possible_plan))
         # Check for actions with effects that match the conditions of
         # the possible plan
         possible_previous_actions = _actions_that_match_possible_plan(
             possible_plan, available_actions=available_actions,
             actor=actor, objects=objects)
-        log.debug("Posssible actions: %s" % possible_previous_actions)
+        # log.debug("Posssible actions: %s" % possible_previous_actions)
 
         for possible_previous_action in possible_previous_actions:
             # Spawn a copied version of the plan to modify with the
@@ -117,7 +135,8 @@ def breadth_first_plan_search(
 
     return breadth_first_plan_search(
         actor=actor, goal=goal, available_actions=available_actions,
-        objects=objects, possible_plans=next_possible_plans)
+        objects=objects, possible_plans=next_possible_plans,
+        depth=depth+1)
 
 
 def _actions_that_match_possible_plan(
@@ -133,21 +152,21 @@ def _actions_that_match_possible_plan(
     * actor - The agent planning.
     * objects - A list of possible objects to act upon.
     """
-    log.debug("*** In _actions_that_match_possible_plan()")
+    # log.debug("*** In _actions_that_match_possible_plan()")
     possible_previous_actions = []
     for action in available_actions:
-        log.debug("Testing action: %s" % action)
+        # log.debug("Testing action: %s" % action)
         number_of_objects = len(action.objects)
         # Permute over all possible objects for the action
         for tuple_of_objects in permutations(objects, number_of_objects):
-            log.debug("Object permutation: %s" % repr(tuple_of_objects))
+            # log.debug("Object permutation: %s" % repr(tuple_of_objects))
             objects_dict = {}
             for obj_name, obj in zip(action.objects, tuple_of_objects):
                 objects_dict[obj_name] = obj
             action_matches = _action_effects_match_possible_plan(
                 action, possible_plan, actor, **objects_dict)
             if action_matches:
-                log.debug("Action matches.")
+                # log.debug("Action matches.")
                 possible_previous_actions.append(
                     (actor, action, objects_dict)
                 )

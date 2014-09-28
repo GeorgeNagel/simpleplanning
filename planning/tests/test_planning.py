@@ -16,11 +16,7 @@ class Agent(object):
 
     def __repr__(self):
         """Helpful method for using repr() when debugging."""
-        return (
-            '<' + self._name + '. has_sword: %s. alive: %s.>' % (
-                self.has_sword, self.alive
-            )
-        )
+        return '<' + self._name + ' ' + str(id(self)) + '>'
 
 # Test actions
 get_sword = Action(
@@ -41,6 +37,30 @@ kill = Action(
     },
     effects={
         "victim__alive": False,
+    }
+)
+
+steal_sword = Action(
+    "steal sword",
+    preconditions={
+        "victim__has_sword": True,
+        "actor__has_sword": False,
+    },
+    effects={
+        "victim__has_sword": False,
+        "actor__has_sword": True,
+    }
+)
+
+give_sword = Action(
+    "give sword",
+    preconditions={
+        "friend__has_sword": False,
+        "actor__has_sword": True,
+    },
+    effects={
+        "friend__has_sword": True,
+        "actor__has_sword": False,
     }
 )
 
@@ -66,6 +86,31 @@ class TestPlanning(unittest.TestCase):
                 (self.knight, get_sword, {}),
                 (self.knight, kill, {'victim': self.dragon}),
             ]
+        )
+
+    def test_three_actions(self):
+        arthur = Agent("Arthur")
+        arthur.has_sword = False
+        lancelot = Agent("Lancelot")
+        lancelot.has_sword = True
+        guenivere = Agent("Guenivere")
+        guenivere.has_sword = False
+
+        available_actions = [kill, steal_sword, give_sword]
+        objects = [arthur, lancelot, guenivere]
+        arthur_goal = Goal(
+            'guenivere dead',
+            obj=guenivere,
+            attr_name='alive',
+            value=False
+        )
+        actions_sequence = select_plan(
+            actor=arthur, goal=arthur_goal,
+            available_actions=available_actions,
+            objects=objects)
+        self.assertEqual(
+            actions_sequence,
+            []
         )
 
 
@@ -193,6 +238,30 @@ class TestPossiblePlan(unittest.TestCase):
                 (self.knight, get_sword, {}),
                 (self.knight, kill, {'victim': self.dragon})
             ]
+        )
+
+    def test_prepend_action_multiple(self):
+        """Test that multiple actions cause conditions to update properly."""
+        arthur = Agent("Arthur")
+        arthur.has_sword = False
+        lancelot = Agent("Lancelot")
+        lancelot.has_sword = True
+        guenivere = Agent("Guenivere")
+        guenivere.has_sword = False
+        possible_plan = PossiblePlan()
+        possible_plan.prepend_action(
+            (arthur, kill, {'victim': guenivere})
+        )
+        possible_plan.prepend_action(
+            (arthur, steal_sword, {'victim': lancelot})
+        )
+        self.assertEqual(
+            possible_plan.conditions,
+            {
+                (lancelot, 'has_sword'): True,
+                (arthur, 'has_sword'): False,
+                (guenivere, 'alive'): True
+            }
         )
 
 
