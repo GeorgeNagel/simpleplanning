@@ -5,7 +5,7 @@ from planning.goals import Goal
 from planning.plans import (
     PossiblePlan, select_plan, breadth_first_plan_search,
     _create_initial_plan, _actions_that_match_possible_plan,
-    _action_effects_match_possible_plan)
+    _action_effects_match_possible_plan, PlanningDepthException)
 
 
 class Agent(object):
@@ -150,6 +150,18 @@ class TestBreadthFirstPlanSearch(unittest.TestCase):
     def test_no_inputs(self):
         """Ensure that a ValueError is raised for no inputs."""
         self.assertRaises(ValueError, breadth_first_plan_search)
+
+    def test_depth_exception(self):
+        self.knight.has_sword = False
+        available_actions = [kill]
+        self.assertRaises(
+            PlanningDepthException,
+            breadth_first_plan_search,
+            actor=self.knight,
+            goal=self.knight_goal,
+            available_actions=available_actions,
+            objects=self.objects
+        )
 
 
 class TestPossiblePlan(unittest.TestCase):

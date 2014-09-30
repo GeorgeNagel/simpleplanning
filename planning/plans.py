@@ -5,6 +5,9 @@ from planning.settings import log
 MAX_SEARCH_DEPTH = 3
 
 
+class PlanningDepthException(Exception):
+    pass
+
 class PossiblePlan(object):
     """Helper class to track conditions when searching for plans."""
     conditions = None
@@ -99,9 +102,7 @@ def breadth_first_plan_search(
         raise ValueError("Inputs must not be None.")
 
     if depth > MAX_SEARCH_DEPTH:
-        raise ValueError(
-            "Search depth exceeded."
-        )
+        raise PlanningDepthException
 
     # Create an empty possible plan if this is the first iteration.
     if not possible_plans:
