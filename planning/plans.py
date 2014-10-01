@@ -8,6 +8,7 @@ MAX_SEARCH_DEPTH = 3
 class PlanningDepthException(Exception):
     pass
 
+
 class PossiblePlan(object):
     """Helper class to track conditions when searching for plans."""
     conditions = None

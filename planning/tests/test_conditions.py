@@ -2,16 +2,15 @@ import unittest
 
 from planning.agents import Agent
 from planning.conditions import (
-    Condition, HasSword, Is, IsNot, ImpossibleException)
+    Condition, Is, IsNot, ImpossibleException)
 
 
 class IsHungry(Condition):
     name = 'is hungry'
-    required_names = ['eater']
 
     def evaluate(self, **all_objects_dict):
-        eater_key = self._object_names['eater']
-        eater_obj = all_objects_dict[eater_key]
+        objects_list = self.objects_list_from_objects_dict(all_objects_dict)
+        eater_obj = objects_list[0]
         if hasattr(eater_obj, 'is_hungry'):
             return eater_obj.is_hungry
         else:
@@ -34,28 +33,48 @@ class TestCondition(unittest.TestCase):
         )
 
     def test_object_names(self):
-        is_hungry = IsHungry(eater='actor')
+        is_hungry = IsHungry(['hungry_guy'])
         object_names = is_hungry.object_names
-        self.assertEqual(object_names, ['eater'])
+        self.assertEqual(object_names, ['hungry_guy'])
 
-class TestHasSword(unittest.TestCase):
-    def test_no_sword(self):
+    def test_planning_tuple(self):
+        is_hungry = IsHungry(['hungry_guy'])
+        test_agent = Agent('test agent')
+        planning_tup = is_hungry.planning_tuple(
+            hungry_guy=test_agent, maroon=5)
+        self.assertEqual(
+            planning_tup,
+            (IsHungry, [test_agent])
+        )
+
+    def test_objects_list_from_objects_dict(self):
+        is_hungry = IsHungry(['hungry_guy'])
+        test_agent = Agent('hungry agent')
+        objects_list = is_hungry.objects_list_from_objects_dict(
+            {'hungry_guy': test_agent}
+        )
+        self.assertEqual(objects_list, [test_agent])
+
+
+class TestIsHungryCondition(unittest.TestCase):
+    def test_is_hungry(self):
         knight = Agent('Knight')
-        has_sword = HasSword(agent='knight')
-        result = has_sword.evaluate(knight=knight)
+        is_hungry_condition = IsHungry(['knight'])
+        result = is_hungry_condition.evaluate(knight=knight)
         self.assertFalse(result)
 
-    def test_has_sword(self):
+    def test_is_not_hungry(self):
         knight = Agent('Knight')
-        knight.has_sword = True
-        has_sword = HasSword(agent='knight')
-        result = has_sword.evaluate(knight=knight)
+        knight.is_hungry = True
+        is_hungry_condition = IsHungry(['knight'])
+        result = is_hungry_condition.evaluate(knight=knight)
         self.assertTrue(result)
+
 
 class TestIsCondition(unittest.TestCase):
     def test_equivalent(self):
         agent = Agent("test agent")
-        _is = Is(obj_1='agent_1', obj_2='agent_2')
+        _is = Is(['agent_1', 'agent_2'])
         result = _is.evaluate(agent_1=agent, agent_2=agent)
         self.assertTrue(result)
 
@@ -63,7 +82,7 @@ class TestIsCondition(unittest.TestCase):
         """Evaluation should raise ImpossibleException."""
         agent_1 = Agent("first agent")
         agent_2 = Agent("second agent")
-        _is = Is(obj_1='agent_1', obj_2='agent_2')
+        _is = Is(['agent_1', 'agent_2'])
         self.assertRaises(
             ImpossibleException,
             _is.evaluate,
@@ -76,18 +95,17 @@ class TestIsNotCondition(unittest.TestCase):
     def test_not_equivalent(self):
         agent_1 = Agent("first agent")
         agent_2 = Agent("second agent")
-        _is_not = IsNot(obj_1='agent_1', obj_2='agent_2')
+        _is_not = IsNot(['agent_1', 'agent_2'])
         result = _is_not.evaluate(agent_1=agent_1, agent_2=agent_2)
         self.assertTrue(result)
 
     def test_equivalent(self):
         """Evaluation should raise ImpossibleException."""
         agent = Agent("test agent")
-        _is_not = IsNot(obj_1='agent_1', obj_2='agent_2')
+        _is_not = IsNot(['agent_1', 'agent_2'])
         self.assertRaises(
             ImpossibleException,
             _is_not.evaluate,
             agent_1=agent,
             agent_2=agent
         )
-

@@ -2,26 +2,54 @@ import unittest
 
 from planning.actions import Action
 from planning.agents import Agent
+from planning.conditions import Condition
+
+
+# Test-related conditions
+class HasSword(Condition):
+    name = 'has sword'
+    required_names = ['agent']
+
+    def evaluate(self, **all_objects_dict):
+        agent_key = self._object_names['agent']
+        agent_obj = all_objects_dict[agent_key]
+        if hasattr(agent_obj, 'has_sword'):
+            return agent_obj.has_sword
+        else:
+            return False
+
+
+class IsAlive(Condition):
+    name = 'is alive'
+    required_names = ['agent']
+
+    def evaluate(self, **all_objects_dict):
+        agent_key = self._object_names['agent']
+        agent_obj = all_objects_dict[agent_key]
+        if hasattr(agent_obj, 'is_hungry'):
+            return agent_obj.is_hungry
+        else:
+            return True
 
 
 # Test action
 kill = Action(
     'kill',
-    preconditions={
-        'victim__alive': True,
-    },
+    preconditions=[
+        (IsAlive(agent='victim'), True)
+    ],
     effects={
-        'victim__alive': False,
+        (IsAlive(agent='victim'), False)
     }
 )
 
 suicide = Action(
     'suicide',
     preconditions={
-        'actor__alive': True,
+        (IsAlive(agent='actor'), True)
     },
     effects={
-        'actor__alive': False,
+        (IsAlive(agent='actor'), False)
     }
 )
 

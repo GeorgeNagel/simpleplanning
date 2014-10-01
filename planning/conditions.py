@@ -1,3 +1,6 @@
+import copy
+
+
 class ImpossibleException(Exception):
     pass
 
@@ -5,33 +8,24 @@ class ImpossibleException(Exception):
 class Condition(object):
     # Name of the condition
     name = None
-    # A dict mapping condition names to action names
+    # A list of the names to be used for the condition
     _object_names = None
-    # A list of names of objects consumed by this condition
-    required_names = None
 
-    def __init__(self, **object_names):
+    def __init__(self, object_names=None):
         """Condition constructor.
 
         PARAMETERS
         * name - The name of the condition.
-        * **object_names - A dict like {'wizard': 'actor'}
+        * object_names - A list like ['actor', 'victim']
         """
         self._object_names = object_names
-        if not isinstance(self.required_names, list):
-            raise ValueError("required_names must be a list.")
-        # Ensure that all the required names are used
-        used_names = set()
-        for name in object_names.keys():
-            used_names.add(name)
-        if used_names != set(self.required_names):
-            raise ValueError(
-                "All of the following must be defined: %s" %
-                set(self.required_names)
-            )
         if self.name is None:
             raise ValueError(
                 "Must specify a name"
+            )
+        if not isinstance(object_names, list) and object_names is not None:
+            raise ValueError(
+                "object_names must be a list or None."
             )
 
     @property
@@ -46,52 +40,47 @@ class Condition(object):
 
     def evaluate(self, **all_objects_dict):
         """Evaluate the truth value of this condition.
-        
+
         PARAMETERS:
         * all_objects_dict - A dict of all objects being evaluated"""
         # Raise ImpossibleException if the condition evaluated on these objects
         # will never return True, regardless of any actions evaluated prior.
         raise NotImplementedError
 
+    def planning_tuple(self, **all_objects_dict):
+        """Return the tuple to be used for planning.
+        The tuple is in the form of (condition_instance, [obj_1, obj_2])
+        """
+        objects_list = self.objects_list_from_objects_dict(all_objects_dict)
+        _planning_tuple = (self.__class__, objects_list)
+        return _planning_tuple
 
-class HasSword(Condition):
-    name='has sword'
-    required_names=['agent']
-
-    def evaluate(self, **all_objects_dict):
-        agent_key = self._object_names['agent']
-        agent_obj = all_objects_dict[agent_key]
-        if hasattr(agent_obj, 'has_sword'):
-            return agent_obj.has_sword
-        else:
-            return False
+    def objects_list_from_objects_dict(self, all_objects_dict):
+        """Utility to return the list of objects for a condition."""
+        objects_list = []
+        for object_key in self._object_names:
+            obj = all_objects_dict[object_key]
+            objects_list.append(obj)
+        return objects_list
 
 
 class Is(Condition):
-    name='is'
-    required_names=['obj_1', 'obj_2']
+    name = 'is'
 
     def evaluate(self, **all_objects_dict):
-        obj_1_key = self._object_names['obj_1']
-        obj_2_key = self._object_names['obj_2']
-        obj_1 = all_objects_dict[obj_1_key]
-        obj_2 = all_objects_dict[obj_2_key]
-        if obj_1 == obj_2:
+        objects_list = self.objects_list_from_objects_dict(all_objects_dict)
+        if objects_list[0] == objects_list[1]:
             return True
         else:
             raise ImpossibleException
 
 
 class IsNot(Condition):
-    name='is not'
-    required_names=['obj_1', 'obj_2']
+    name = 'is not'
 
     def evaluate(self, **all_objects_dict):
-        obj_1_key = self._object_names['obj_1']
-        obj_2_key = self._object_names['obj_2']
-        obj_1 = all_objects_dict[obj_1_key]
-        obj_2 = all_objects_dict[obj_2_key]
-        if obj_1 != obj_2:
+        objects_list = self.objects_list_from_objects_dict(all_objects_dict)
+        if objects_list[0] != objects_list[1]:
             return True
         else:
             raise ImpossibleException

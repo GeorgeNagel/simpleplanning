@@ -20,14 +20,14 @@ class Action(object):
     def objects(self):
         """A list of all objects involved in the action, excluding 'actor'."""
         objects = set()
-        for precondition in self.preconditions:
-            obj_name, attr_name = precondition.split('__')
-            objects.add(obj_name)
-        for effect in self.effects:
-            obj_name, attr_name = effect.split('__')
-            objects.add(obj_name)
-        if 'actor' in objects:
-            objects.remove('actor')
+        for precondition_tuple in self.preconditions:
+            precondition, value = precondition_tuple
+            condition_object_names = precondition.object_names
+            objects.update(condition_object_names)
+        for effect_tuple in self.effects:
+            effect, value = effect_tuple
+            effect_object_names = effect.object_names
+            objects.update(effect_object_names)
         return list(objects)
 
     def check_preconditions(self, actor=None, **objects_dict):
@@ -50,57 +50,39 @@ class Action(object):
 
         # Check all the preconditions
         all_preconditions_met = True
-        for precondition in self.preconditions:
-            # Split the precondition into the object and its attribute
-            obj_name, attr_name = precondition.split("__")
-            obj = all_objects[obj_name]
-            precondition_value = self.preconditions[precondition]
-            actual_value = getattr(obj, attr_name)
-
-            if precondition_value != actual_value:
+        for precondition_tuple in self.preconditions:
+            precondition, expected_value = precondition_tuple
+            actual_value = precondition.evaluate(**all_objects)
+            if expected_value != actual_value:
                 all_preconditions_met = False
                 break
         log.debug("Preconditions met? %s" % all_preconditions_met)
         return all_preconditions_met
 
-
     def apply_action(self, actor=None, **objects):
-        if not self.check_preconditions(actor=actor, **objects):
-            raise ValueError(
-                "Preconditions not passed."
-            )
-
-        # Dict of all objects (including the actor)
-        all_objects = {'actor': actor}
-        all_objects.update(objects)
-
-        for effect in self.effects:
-            # Split the effect into the object and its attribute
-            obj_name, attr_name = effect.split("__")
-            obj = all_objects[obj_name]
-            effect_value = self.effects[effect]
-            setattr(obj, attr_name, effect_value)
-
+        """Stub for subclasses to implement."""
+        raise NotImplementedError
 
     def calculate_effects(self, actor=None, **objects):
         """Calculate the effects tuple for planning activities."""
+        all_objects_dict = {'actor': actor}
+        all_objects_dict.update(objects)
+
         calculated_effects = {}
-        for action_effect in self.effects:
-            # Parse the effect condition/value pair
-            obj_name, attr_name = action_effect.split('__')
-            effect_value =self.effects[action_effect]
-
-            # Find the actual object by name in the objects dict
-            # Include the actor in the list of objects
-            objects.update({'actor': actor})
-            obj = objects[obj_name]
-
-            calculated_effects[(obj, attr_name)] = effect_value
+        for action_effect_tuple in self.effects:
+            action_effect_condition, effect_value = action_effect_tuple
+            # Get a tuple of the condition and its related objects
+            planning_tuple = action_effect_condition.planning_tuple(
+                **all_objects_dict
+            )
+            calculated_effects[planning_tuple] = effect_value
         return calculated_effects
 
-
     def calculate_preconditions(self, actor=None, **objects):
-        """Create the list of preconditions tuples like (obj, attr_name, value)."""
+        """Create a list of preconditions tuples.
+
+        Tuples are like (obj, attr_name, value).
+        """
         all_objects = {'actor': actor}
         all_objects.update(objects)
 
