@@ -22,10 +22,12 @@ class IsAlive(Condition):
     name = 'is hungry'
 
     def evaluate(self, **all_objects_dict):
+        import logging
+        logging.debug("IN EVALUATE: %s" % all_objects_dict)
         objects_list = self.objects_tuple(**all_objects_dict)
-        eater_obj = objects_list[0]
-        if hasattr(eater_obj, 'is_alive'):
-            return eater_obj.is_alive
+        obj = objects_list[0]
+        if hasattr(obj, 'alive'):
+            return obj.alive
         else:
             return False
 
@@ -43,7 +45,7 @@ class Kill(Action):
     @classmethod
     def apply_action(cls, actor=None, **objects):
         victim = objects['victim']
-        victim.is_alive = False
+        victim.alive = False
 
 
 class Suicide(Action):
@@ -57,7 +59,7 @@ class Suicide(Action):
 
     @classmethod
     def apply_action(cls, actor=None, **objects):
-        actor.is_alive = False
+        actor.alive = False
 
 
 class TestActions(unittest.TestCase):
