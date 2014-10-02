@@ -9,8 +9,8 @@ class IsHungry(Condition):
     name = 'is hungry'
 
     def evaluate(self, **all_objects_dict):
-        objects_list = self.objects_list_from_objects_dict(all_objects_dict)
-        eater_obj = objects_list[0]
+        objects_tuple = self.objects_tuple(**all_objects_dict)
+        eater_obj = objects_tuple[0]
         if hasattr(eater_obj, 'is_hungry'):
             return eater_obj.is_hungry
         else:
@@ -44,16 +44,25 @@ class TestCondition(unittest.TestCase):
             hungry_guy=test_agent, maroon=5)
         self.assertEqual(
             planning_tup,
-            (IsHungry, [test_agent])
+            (IsHungry, (test_agent,))
         )
 
-    def test_objects_list_from_objects_dict(self):
+    def test_objects_tuple(self):
         is_hungry = IsHungry(['hungry_guy'])
         test_agent = Agent('hungry agent')
-        objects_list = is_hungry.objects_list_from_objects_dict(
-            {'hungry_guy': test_agent}
+        objects_tuple = is_hungry.objects_tuple(
+            hungry_guy=test_agent
         )
-        self.assertEqual(objects_list, [test_agent])
+        self.assertEqual(objects_tuple, (test_agent,))
+
+    def test_initialize_string(self):
+        """Test that a condition may be initialized with a string."""
+        is_hungry = IsHungry('hungry_dude')
+        test_agent = Agent('Mr. Hungry')
+        objects_tuple = is_hungry.objects_tuple(
+            hungry_dude=test_agent
+        )
+        self.assertEqual(objects_tuple, (test_agent,))
 
 
 class TestIsHungryCondition(unittest.TestCase):

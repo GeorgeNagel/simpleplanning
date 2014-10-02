@@ -7,51 +7,57 @@ from planning.conditions import Condition
 
 # Test-related conditions
 class HasSword(Condition):
-    name = 'has sword'
-    required_names = ['agent']
+    name = 'is hungry'
 
     def evaluate(self, **all_objects_dict):
-        agent_key = self._object_names['agent']
-        agent_obj = all_objects_dict[agent_key]
-        if hasattr(agent_obj, 'has_sword'):
-            return agent_obj.has_sword
+        objects_list = self.objects_tuple(**all_objects_dict)
+        eater_obj = objects_list[0]
+        if hasattr(eater_obj, 'has_sword'):
+            return eater_obj.has_sword
         else:
             return False
 
 
 class IsAlive(Condition):
-    name = 'is alive'
-    required_names = ['agent']
+    name = 'is hungry'
 
     def evaluate(self, **all_objects_dict):
-        agent_key = self._object_names['agent']
-        agent_obj = all_objects_dict[agent_key]
-        if hasattr(agent_obj, 'is_hungry'):
-            return agent_obj.is_hungry
+        objects_list = self.objects_tuple(**all_objects_dict)
+        eater_obj = objects_list[0]
+        if hasattr(eater_obj, 'is_alive'):
+            return eater_obj.is_alive
         else:
-            return True
+            return False
 
 
-# Test action
-kill = Action(
-    'kill',
-    preconditions=[
-        (IsAlive(agent='victim'), True)
-    ],
-    effects={
-        (IsAlive(agent='victim'), False)
-    }
-)
+# Test actions
+class Kill(Action):
+    name = "kill"
+    preconditions = [
+        (IsAlive('victim'), True)
+    ]
+    effects = [
+        (IsAlive('victim'), False)
+    ]
 
-suicide = Action(
-    'suicide',
-    preconditions={
-        (IsAlive(agent='actor'), True)
-    },
-    effects={
-        (IsAlive(agent='actor'), False)
-    }
-)
+    @classmethod
+    def apply_action(cls, actor=None, **objects):
+        victim = objects['victim']
+        victim.is_alive = False
+
+
+class Suicide(Action):
+    name = 'suicide',
+    preconditions = [
+        (IsAlive('actor'), True)
+    ]
+    effects = [
+        (IsAlive('actor'), False)
+    ]
+
+    @classmethod
+    def apply_action(cls, actor=None, **objects):
+        actor.is_alive = False
 
 
 class TestActions(unittest.TestCase):
@@ -67,51 +73,51 @@ class TestActions(unittest.TestCase):
         self.actor = st_george
         self.object = dragon
 
-    def test_objects(self):
-        self.assertEqual(kill.objects, ['victim'])
+    def test_object_keys(self):
+        self.assertEqual(Kill.object_keys(), ['victim'])
 
     def test_check_preconditions_failure(self):
         self.object.alive = False
-        result = kill.check_preconditions(
+        result = Kill.check_preconditions(
             actor=self.actor, victim=self.object)
         self.assertFalse(result)
 
     def test_check_preconditions(self):
-        result = kill.check_preconditions(
+        result = Kill.check_preconditions(
             actor=self.actor, victim=self.object)
         self.assertTrue(result)
 
     def test_agent_preconditions(self):
-        result = suicide.check_preconditions(actor=self.actor)
+        result = Suicide.check_preconditions(actor=self.actor)
         self.assertTrue(result)
 
     def test_check_preconditions_object_mismatch(self):
         """Test that a ValueError is raised for invalid objects."""
         self.assertRaises(
             ValueError,
-            kill.check_preconditions,
+            Kill.check_preconditions,
             actor=self.actor,
             test="test"
         )
 
     def test_apply_action(self):
         """Test that applying an action has the desired effects."""
-        kill.apply_action(actor=self.actor, victim=self.object)
+        Kill.apply_action(actor=self.actor, victim=self.object)
         self.assertTrue(self.actor.alive)
         self.assertFalse(self.object.alive)
 
     def test_calculate_effects(self):
-        effects = kill.calculate_effects(actor=self.actor, victim=self.object)
+        effects = Kill.calculate_effects(actor=self.actor, victim=self.object)
         self.assertEqual(
             effects,
-            {(self.object, 'alive'): False}
+            {(IsAlive, (self.object,)): False}
         )
 
     def test_calculate_preconditions(self):
-        preconditions = kill.calculate_preconditions(
+        preconditions = Kill.calculate_preconditions(
             actor=self.actor, victim=self.object
         )
         self.assertEqual(
             preconditions,
-            [(self.object, 'alive', True)]
+            [(IsAlive, (self.object,), True)]
         )

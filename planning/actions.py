@@ -2,12 +2,16 @@ from planning.settings import log
 
 
 class Action(object):
-    name = ''
+    name = None
     preconditions = None
     effects = None
 
-    def __init__(self, name, preconditions=None, effects=None):
-        if any([kw is None for kw in [preconditions, effects]]):
+    def __init__(self):
+        if any(
+            [val is None for val in [
+                self.name, self.preconditions, self.effects]
+            ]
+        ):
             raise ValueError("precondtions and effects must be specified.")
         self.name = name
         self.preconditions = preconditions
@@ -16,41 +20,42 @@ class Action(object):
     def __repr__(self):
         return "<%s>" % self.name
 
-    @property
-    def objects(self):
+    @classmethod
+    def object_keys(cls):
         """A list of all objects involved in the action, excluding 'actor'."""
         objects = set()
-        for precondition_tuple in self.preconditions:
+        for precondition_tuple in cls.preconditions:
             precondition, value = precondition_tuple
             condition_object_names = precondition.object_names
             objects.update(condition_object_names)
-        for effect_tuple in self.effects:
+        for effect_tuple in cls.effects:
             effect, value = effect_tuple
             effect_object_names = effect.object_names
             objects.update(effect_object_names)
         return list(objects)
 
-    def check_preconditions(self, actor=None, **objects_dict):
+    @classmethod
+    def check_preconditions(cls, actor=None, **objects_dict):
         """Check to see if the preconditions for this action are met."""
         log.debug("Checking preconditions")
         log.debug("action: %s, actor: %s, objects: %s" % (
-            self.name, actor, objects_dict))
+            cls.name, actor, objects_dict))
 
         all_objects = {'actor': actor}
         all_objects.update(objects_dict)
 
         # The object arguments must match those required by the preconditions
-        if set(objects_dict.keys()) != set(self.objects):
+        if set(objects_dict.keys()) != set(cls.object_keys()):
             raise ValueError(
                 "Input objects and action objects mismatch."
                 " Input objects: %s. Output objects: %s." % (
-                    set(objects_dict.keys()), set(self.objects)
+                    set(objects_dict.keys()), set(cls.object_keys())
                 )
             )
 
         # Check all the preconditions
         all_preconditions_met = True
-        for precondition_tuple in self.preconditions:
+        for precondition_tuple in cls.preconditions:
             precondition, expected_value = precondition_tuple
             actual_value = precondition.evaluate(**all_objects)
             if expected_value != actual_value:
@@ -59,17 +64,19 @@ class Action(object):
         log.debug("Preconditions met? %s" % all_preconditions_met)
         return all_preconditions_met
 
-    def apply_action(self, actor=None, **objects):
+    @classmethod
+    def apply_action(cls, actor=None, **objects):
         """Stub for subclasses to implement."""
         raise NotImplementedError
 
-    def calculate_effects(self, actor=None, **objects):
-        """Calculate the effects tuple for planning activities."""
+    @classmethod
+    def calculate_effects(cls, actor=None, **objects):
+        """Create an effects dict for planning activities."""
         all_objects_dict = {'actor': actor}
         all_objects_dict.update(objects)
 
         calculated_effects = {}
-        for action_effect_tuple in self.effects:
+        for action_effect_tuple in cls.effects:
             action_effect_condition, effect_value = action_effect_tuple
             # Get a tuple of the condition and its related objects
             planning_tuple = action_effect_condition.planning_tuple(
@@ -78,20 +85,22 @@ class Action(object):
             calculated_effects[planning_tuple] = effect_value
         return calculated_effects
 
-    def calculate_preconditions(self, actor=None, **objects):
+    @classmethod
+    def calculate_preconditions(cls, actor=None, **objects):
         """Create a list of preconditions tuples.
+        These tuples represent the state prior to this action.
 
-        Tuples are like (obj, attr_name, value).
+        Tuples are like (condition_class, object_tuple, value).
         """
-        all_objects = {'actor': actor}
-        all_objects.update(objects)
+        all_objects_dict = {'actor': actor}
+        all_objects_dict.update(objects)
 
-        preconditions_tuples = []
-        for precondition in self.preconditions:
+        calculated_preconditions = []
+        for precondition_tuple in cls.preconditions:
             # Split the precondition into the object and its attribute
-            obj_name, attr_name = precondition.split("__")
-            obj = all_objects[obj_name]
-            precondition_value = self.preconditions[precondition]
-            preconditions_tuple = (obj, attr_name, precondition_value)
-            preconditions_tuples.append(preconditions_tuple)
-        return preconditions_tuples
+            condition_object, value = precondition_tuple
+            condition_class = condition_object.__class__
+            objects_tuple = condition_object.objects_tuple(**all_objects_dict)
+            prior_state_tuple = (condition_class, objects_tuple, value)
+            calculated_preconditions.append(prior_state_tuple)
+        return calculated_preconditions
