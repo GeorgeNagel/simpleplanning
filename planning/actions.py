@@ -24,13 +24,19 @@ class Action(object):
         """A list of all objects involved in the action, excluding 'actor'."""
         objects = set()
         for precondition_tuple in cls.preconditions:
-            precondition, value = precondition_tuple
-            condition_object_names = precondition.object_names
-            objects.update(condition_object_names)
+            precondition, condition_objects, value = precondition_tuple
+            if isinstance(condition_objects, basestring):
+                objects.add(condition_objects)
+            else:
+                objects.update(condition_objects)
         for effect_tuple in cls.effects:
-            effect, value = effect_tuple
-            effect_object_names = effect.object_names
-            objects.update(effect_object_names)
+            effect, condition_objects, value = effect_tuple
+            if isinstance(condition_objects, basestring):
+                objects.add(condition_objects)
+            else:
+                objects.update(condition_objects)
+        if 'actor' in objects:
+            objects.remove('actor')
         return list(objects)
 
     @classmethod
@@ -55,11 +61,15 @@ class Action(object):
         # Check all the preconditions
         all_preconditions_met = True
         for precondition_tuple in cls.preconditions:
-            precondition, expected_value = precondition_tuple
-            actual_value = precondition.evaluate(**all_objects)
+            precondition_class, object_names, expected_value = precondition_tuple
+            if isinstance(object_names, basestring):
+                object_names = [object_names]
+            objects_list = [all_objects[name] for name in object_names]
+            condition_inst = precondition_class(objects_list)
+            actual_value = condition_inst.evaluate()
             if expected_value != actual_value:
                 log.debug("MISMATCH: %s, expected: %s. actual: %s" % (
-                    precondition, expected_value, actual_value)
+                    precondition_class, expected_value, actual_value)
                 )
                 all_preconditions_met = False
                 break
@@ -79,11 +89,13 @@ class Action(object):
 
         calculated_effects = {}
         for action_effect_tuple in cls.effects:
-            action_effect_condition, effect_value = action_effect_tuple
+            condition_class, object_names, effect_value = action_effect_tuple
+            if isinstance(object_names, basestring):
+                object_names = [object_names]
+            objects_list = [all_objects_dict[name] for name in object_names]
+            condition_instance = condition_class(objects_list)
             # Get a tuple of the condition and its related objects
-            planning_tuple = action_effect_condition.planning_tuple(
-                **all_objects_dict
-            )
+            planning_tuple = condition_instance.planning_tuple
             calculated_effects[planning_tuple] = effect_value
         return calculated_effects
 
@@ -99,10 +111,12 @@ class Action(object):
 
         calculated_preconditions = []
         for precondition_tuple in cls.preconditions:
-            # Split the precondition into the object and its attribute
-            condition_object, value = precondition_tuple
-            condition_class = condition_object.__class__
-            objects_tuple = condition_object.objects_tuple(**all_objects_dict)
+            condition_class, object_names, value = precondition_tuple
+            if isinstance(object_names, basestring):
+                object_names = [object_names]
+            # Create the list of objects by name
+            objects_list = [all_objects_dict[name] for name in object_names]
+            objects_tuple = tuple(objects_list)
             prior_state_tuple = (condition_class, objects_tuple, value)
             calculated_preconditions.append(prior_state_tuple)
         return calculated_preconditions

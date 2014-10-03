@@ -7,30 +7,33 @@ class Goal(object):
     """Utility class for goals."""
     # TODO: Allow for multiple subgoals
     name = ""
-    _goal_obj = None
-    _goal_attr_name = None
+    _goal_all_objects_dict = None
+    # A condition instance
+    _goal_condition = None
     _goal_value = None
 
-    def __init__(self, name, obj=None, attr_name=None, value=None):
-        if any(val is None for val in [obj, attr_name, value]):
-            raise ValueError("Must specify obj, attr_name, and value")
+    def __init__(self, name, all_objects_dict=None,
+                 condition=None, value=None):
+        if any(val is None for val in [all_objects_dict, condition, value]):
+            raise ValueError(
+                "Must specify all_objects_dict, condition, and value")
         self.name = name
-        self._goal_obj = obj
-        self._goal_attr_name = attr_name
+        self._goal_all_objects_dict = all_objects_dict
+        self._goal_condition = condition
         self._goal_value = value
 
     def __repr__(self):
-        return "<%s.%s: %s>" % (
-            self._goal_obj, self._goal_attr_name, self._goal_value
+        return "<%s %s: %s>" % (
+            self._goal_condition, self._goal_all_objects_dict, self._goal_value
         )
 
     @property
-    def goal_obj(self):
-        return self._goal_obj
+    def _goal_all_objects_dict(self):
+        return self._goal_all_objects_dict
 
     @property
-    def goal_attr_name(self):
-        return self._goal_attr_name
+    def goal_condition(self):
+        return self._goal_condition
 
     @property
     def goal_value(self):
@@ -38,16 +41,12 @@ class Goal(object):
 
     def is_satisfied(self):
         """Check if a goal is currently satisfied."""
-        actual_value = getattr(self._goal_obj, self._goal_attr_name)
+        actual_value = condition.evaluate(**all_objects_dict)
         return actual_value == self._goal_value
 
 
-def generate_goal(objects):
-    """
-    Returns an object, attribute, value pair.
-    Assumes that all attributes can be modified by actions.
-    Assumes all attributes are boolean.
-    """
+def generate_goal(conditions, objects):
+    """Returns a Goal object."""
     log.debug("Generating goal.")
     possible_goals = []
     for obj in objects:

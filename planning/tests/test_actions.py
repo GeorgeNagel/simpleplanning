@@ -8,10 +8,10 @@ from planning.conditions import Condition
 # Test-related conditions
 class HasSword(Condition):
     name = 'is hungry'
+    number_of_objects = 1
 
-    def evaluate(self, **all_objects_dict):
-        objects_list = self.objects_tuple(**all_objects_dict)
-        eater_obj = objects_list[0]
+    def evaluate(self):
+        eater_obj = self.objects[0]
         if hasattr(eater_obj, 'has_sword'):
             return eater_obj.has_sword
         else:
@@ -20,12 +20,11 @@ class HasSword(Condition):
 
 class IsAlive(Condition):
     name = 'is hungry'
+    number_of_objects = 1
 
-    def evaluate(self, **all_objects_dict):
+    def evaluate(self):
         import logging
-        logging.debug("IN EVALUATE: %s" % all_objects_dict)
-        objects_list = self.objects_tuple(**all_objects_dict)
-        obj = objects_list[0]
+        obj = self.objects[0]
         if hasattr(obj, 'alive'):
             return obj.alive
         else:
@@ -36,10 +35,10 @@ class IsAlive(Condition):
 class Kill(Action):
     name = "kill"
     preconditions = [
-        (IsAlive('victim'), True)
+        (IsAlive, 'victim', True)
     ]
     effects = [
-        (IsAlive('victim'), False)
+        (IsAlive, 'victim', False)
     ]
 
     @classmethod
@@ -51,10 +50,10 @@ class Kill(Action):
 class Suicide(Action):
     name = 'suicide',
     preconditions = [
-        (IsAlive('actor'), True)
+        (IsAlive, 'actor', True)
     ]
     effects = [
-        (IsAlive('actor'), False)
+        (IsAlive, 'actor', False)
     ]
 
     @classmethod

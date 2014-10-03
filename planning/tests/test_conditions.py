@@ -7,10 +7,10 @@ from planning.conditions import (
 
 class IsHungry(Condition):
     name = 'is hungry'
+    number_of_objects = 1
 
-    def evaluate(self, **all_objects_dict):
-        objects_tuple = self.objects_tuple(**all_objects_dict)
-        eater_obj = objects_tuple[0]
+    def evaluate(self):
+        eater_obj = self.objects[0]
         if hasattr(eater_obj, 'is_hungry'):
             return eater_obj.is_hungry
         else:
@@ -23,7 +23,7 @@ class TestCondition(unittest.TestCase):
         """The evaluate() method must be implemented."""
         class IsFoolish(Condition):
             name = 'is foolish'
-            required_names = []
+            number_of_objects = 0
 
         # Instantiate the condition object
         is_foolish = IsFoolish()
@@ -32,71 +32,46 @@ class TestCondition(unittest.TestCase):
             is_foolish.evaluate,
         )
 
-    def test_object_names(self):
-        is_hungry = IsHungry(['hungry_guy'])
-        object_names = is_hungry.object_names
-        self.assertEqual(object_names, ['hungry_guy'])
-
     def test_planning_tuple(self):
-        is_hungry = IsHungry(['hungry_guy'])
         test_agent = Agent('test agent')
-        planning_tup = is_hungry.planning_tuple(
-            hungry_guy=test_agent, maroon=5)
+        agent_is_hungry = IsHungry([test_agent])
+        planning_tup = agent_is_hungry.planning_tuple
         self.assertEqual(
             planning_tup,
             (IsHungry, (test_agent,))
         )
 
-    def test_objects_tuple(self):
-        is_hungry = IsHungry(['hungry_guy'])
-        test_agent = Agent('hungry agent')
-        objects_tuple = is_hungry.objects_tuple(
-            hungry_guy=test_agent
-        )
-        self.assertEqual(objects_tuple, (test_agent,))
-
-    def test_initialize_string(self):
-        """Test that a condition may be initialized with a string."""
-        is_hungry = IsHungry('hungry_dude')
-        test_agent = Agent('Mr. Hungry')
-        objects_tuple = is_hungry.objects_tuple(
-            hungry_dude=test_agent
-        )
-        self.assertEqual(objects_tuple, (test_agent,))
-
 
 class TestIsHungryCondition(unittest.TestCase):
     def test_is_hungry(self):
         knight = Agent('Knight')
-        is_hungry_condition = IsHungry(['knight'])
-        result = is_hungry_condition.evaluate(knight=knight)
+        knight_is_hungry = IsHungry(knight)
+        result = knight_is_hungry.evaluate()
         self.assertFalse(result)
 
     def test_is_not_hungry(self):
         knight = Agent('Knight')
         knight.is_hungry = True
-        is_hungry_condition = IsHungry(['knight'])
-        result = is_hungry_condition.evaluate(knight=knight)
+        knight_is_hungry = IsHungry(knight)
+        result = knight_is_hungry.evaluate()
         self.assertTrue(result)
 
 
 class TestIsCondition(unittest.TestCase):
     def test_equivalent(self):
         agent = Agent("test agent")
-        _is = Is(['agent_1', 'agent_2'])
-        result = _is.evaluate(agent_1=agent, agent_2=agent)
+        one_is_one = Is([agent, agent])
+        result = one_is_one.evaluate()
         self.assertTrue(result)
 
     def test_not_equivalent(self):
         """Evaluation should raise ImpossibleException."""
         agent_1 = Agent("first agent")
         agent_2 = Agent("second agent")
-        _is = Is(['agent_1', 'agent_2'])
+        one_is_two = Is([agent_1, agent_2])
         self.assertRaises(
             ImpossibleException,
-            _is.evaluate,
-            agent_1=agent_1,
-            agent_2=agent_2
+            one_is_two.evaluate
         )
 
 
@@ -104,17 +79,15 @@ class TestIsNotCondition(unittest.TestCase):
     def test_not_equivalent(self):
         agent_1 = Agent("first agent")
         agent_2 = Agent("second agent")
-        _is_not = IsNot(['agent_1', 'agent_2'])
-        result = _is_not.evaluate(agent_1=agent_1, agent_2=agent_2)
+        one_is_not_two = IsNot([agent_1, agent_2])
+        result = one_is_not_two.evaluate()
         self.assertTrue(result)
 
     def test_equivalent(self):
         """Evaluation should raise ImpossibleException."""
         agent = Agent("test agent")
-        _is_not = IsNot(['agent_1', 'agent_2'])
+        one_is_not_one = IsNot([agent, agent])
         self.assertRaises(
             ImpossibleException,
-            _is_not.evaluate,
-            agent_1=agent,
-            agent_2=agent
+            one_is_not_one.evaluate
         )
