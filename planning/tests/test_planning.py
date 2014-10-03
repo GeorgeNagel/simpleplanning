@@ -1,6 +1,7 @@
 import unittest
 
 from planning.actions import Action
+from planning.conditions import Condition
 from planning.goals import Goal
 from planning.plans import (
     PossiblePlan, select_plan, breadth_first_plan_search,
@@ -18,58 +19,85 @@ class Agent(object):
         """Helpful method for using repr() when debugging."""
         return '<' + self._name + ' ' + str(id(self)) + '>'
 
+
+# Test-related conditions
+class HasSword(Condition):
+    name = 'is hungry'
+
+    def evaluate(self, **all_objects_dict):
+        objects_list = self.objects_tuple(**all_objects_dict)
+        eater_obj = objects_list[0]
+        if hasattr(eater_obj, 'has_sword'):
+            return eater_obj.has_sword
+        else:
+            return False
+
+
+class IsAlive(Condition):
+    name = 'is hungry'
+
+    def evaluate(self, **all_objects_dict):
+        import logging
+        logging.debug("IN EVALUATE: %s" % all_objects_dict)
+        objects_list = self.objects_tuple(**all_objects_dict)
+        obj = objects_list[0]
+        if hasattr(obj, 'alive'):
+            return obj.alive
+        else:
+            return False
+
+
 # Test actions
-get_sword = Action(
-    'get sword',
-    preconditions={
-        "actor__has_sword": False,
-    },
-    effects={
-        "actor__has_sword": True,
-    }
-)
+class GetSword(Action):
+    name = 'get sword',
+    preconditions = [
+        (HasSword('actor'), False)
+    ]
+    effects = [
+        (HasSword('actor'), True)
+    ]
 
-kill = Action(
-    "kill",
-    preconditions={
-        "victim__alive": True,
-        "actor__has_sword": True,
-    },
-    effects={
-        "victim__alive": False,
-    }
-)
 
-steal_sword = Action(
-    "steal sword",
-    preconditions={
-        "victim__has_sword": True,
-        "actor__has_sword": False,
-    },
-    effects={
-        "victim__has_sword": False,
-        "actor__has_sword": True,
-    }
-)
+class Kill(Action):
+    name = "kill"
+    preconditions = [
+        (IsAlive('victim'), True),
+        (HasSword('actor'), True)
+    ]
+    effects = [
+        (IsAlive('victim'), False)
+    ]
 
-give_sword = Action(
-    "give sword",
-    preconditions={
-        "friend__has_sword": False,
-        "actor__has_sword": True,
-    },
-    effects={
-        "friend__has_sword": True,
-        "actor__has_sword": False,
-    }
-)
+
+class StealSword(Action):
+    name = 'steal sword'
+    preconditions = [
+        (HasSword('victim'), True),
+        (HasSword('actor'), False)
+    ]
+    effects = [
+        (HasSword('victim'), False),
+        (HasSword('actor'), True)
+    ]
+
+
+class GiveSword(Action):
+    name = 'give sword'
+    preconditions = [
+        (HasSword('friend'), False),
+        (HasSword('actor'), True)
+    ]
+    effects = [
+        (HasSword('friend'), True),
+        (HasSword('actor'), False)
+    ]
 
 
 class TestPlanning(unittest.TestCase):
     def setUp(self):
         self.knight = Agent('Knight')
         self.dragon = Agent('Dragon')
-        self.possible_actions = [kill, get_sword]
+        self.possible_actions = [Kill, GetSword]
         self.knight_goal = Goal(
             'dragon dead', obj=self.dragon, attr_name='alive', value=False)
         self.objects = [self.knight, self.dragon]
@@ -83,8 +111,8 @@ class TestPlanning(unittest.TestCase):
         self.assertEqual(
             actions_sequence,
             [
-                (self.knight, get_sword, {}),
-                (self.knight, kill, {'victim': self.dragon}),
+                (self.knight, GetSword, {}),
+                (self.knight, Kill, {'victim': self.dragon}),
             ]
         )
 
@@ -96,7 +124,7 @@ class TestPlanning(unittest.TestCase):
         guenivere = Agent("Guenivere")
         guenivere.has_sword = False
 
-        available_actions = [kill, steal_sword, give_sword]
+        available_actions = [Kill, StealSword, GiveSword]
         objects = [arthur, lancelot, guenivere]
         arthur_goal = Goal(
             'guenivere dead',
@@ -118,7 +146,7 @@ class TestBreadthFirstPlanSearch(unittest.TestCase):
     def setUp(self):
         self.knight = Agent('Knight')
         self.dragon = Agent('Dragon')
-        self.possible_actions = [kill, get_sword]
+        self.possible_actions = [Kill, GetSword]
         self.knight_goal = Goal(
             'dragon dead', obj=self.dragon, attr_name='alive', value=False)
         self.objects = [self.knight, self.dragon]
@@ -144,7 +172,7 @@ class TestBreadthFirstPlanSearch(unittest.TestCase):
             objects=self.objects, possible_plans=[])
         self.assertEqual(
             selected_history.actions_to_perform,
-            [(self.knight, kill, {'victim': self.dragon})]
+            [(self.knight, Kill, {'victim': self.dragon})]
         )
 
     def test_no_inputs(self):
@@ -153,7 +181,7 @@ class TestBreadthFirstPlanSearch(unittest.TestCase):
 
     def test_depth_exception(self):
         self.knight.has_sword = False
-        available_actions = [kill]
+        available_actions = [Kill]
         self.assertRaises(
             PlanningDepthException,
             breadth_first_plan_search,
@@ -169,7 +197,7 @@ class TestPossiblePlan(unittest.TestCase):
     def setUp(self):
         self.knight = Agent('Knight')
         self.dragon = Agent('Dragon')
-        self.possible_actions = [kill, get_sword]
+        self.possible_actions = [Kill, GetSword]
         self.knight_goal = Goal(
             'dragon dead', obj=self.dragon, attr_name='alive', value=False)
         self.objects = [self.knight, self.dragon]
@@ -200,7 +228,7 @@ class TestPossiblePlan(unittest.TestCase):
             (self.knight, 'alive'): True,
         }
         possible_plan.actions_to_perform = [
-            (self.knight, kill, {'victim': self.dragon})
+            (self.knight, Kill, {'victim': self.dragon})
         ]
         copy_possible_plan = possible_plan.copy()
 
@@ -227,28 +255,28 @@ class TestPossiblePlan(unittest.TestCase):
         # Create the plan
         possible_plan = PossiblePlan()
         possible_plan.conditions = {
-            (self.knight, 'has_sword'): True,
-            (self.dragon, 'alive'): True,
+            (HasSword, (self.knight,)): True,
+            (IsAlive, (self.dragon,)): True
         }
         possible_plan.actions_to_perform = [
-            (self.knight, kill, {'victim': self.dragon})
+            (self.knight, Kill, {'victim': self.dragon})
         ]
-        # Prepend the get_sword action
+        # Prepend the GetSword action
         possible_plan.prepend_action(
-            (self.knight, get_sword, {})
+            (self.knight, GetSword, {})
         )
         self.assertEqual(
             possible_plan.conditions,
             {
-                (self.knight, 'has_sword'): False,
-                (self.dragon, 'alive'): True,
+                (HasSword, (self.knight,)): False,
+                (IsAlive, (self.dragon,)): True
             }
         )
         self.assertEqual(
             possible_plan.actions_to_perform,
             [
-                (self.knight, get_sword, {}),
-                (self.knight, kill, {'victim': self.dragon})
+                (self.knight, GetSword, {}),
+                (self.knight, Kill, {'victim': self.dragon})
             ]
         )
 
@@ -262,47 +290,47 @@ class TestPossiblePlan(unittest.TestCase):
         guenivere.has_sword = False
         possible_plan = PossiblePlan()
         possible_plan.prepend_action(
-            (arthur, kill, {'victim': guenivere})
+            (arthur, Kill, {'victim': guenivere})
         )
         possible_plan.prepend_action(
-            (arthur, steal_sword, {'victim': lancelot})
+            (arthur, StealSword, {'victim': lancelot})
         )
         self.assertEqual(
             possible_plan.conditions,
             {
-                (lancelot, 'has_sword'): True,
-                (arthur, 'has_sword'): False,
-                (guenivere, 'alive'): True
+                (HasSword, (lancelot,)): True,
+                (HasSword, (arthur,)): False,
+                (IsAlive, (guenivere,)): True
             }
         )
 
 
 class TestActionsThatMatchPossiblePlan(unittest.TestCase):
     def setUp(self):
-        self.actions = [kill, get_sword]
+        self.actions = [Kill, GetSword]
         self.knight = Agent('knight')
         self.dragon = Agent('dragon')
 
     def test_actions_that_match_possible_plan(self):
         possible_plan = PossiblePlan()
         possible_plan.conditions = {
-            (self.dragon, 'alive'): False
+            (IsAlive, (self.dragon,)): False
         }
         actions = _actions_that_match_possible_plan(
             possible_plan, available_actions=self.actions,
             actor=self.knight, objects=[self.knight, self.dragon])
         self.assertEqual(
             actions,
-            [(self.knight, kill, {'victim': self.dragon})]
+            [(self.knight, Kill, {'victim': self.dragon})]
         )
 
     def test_action_effects_match_possible_plan(self):
         possible_plan = PossiblePlan()
         possible_plan.conditions = {
-            (self.dragon, 'alive'): False
+            (IsAlive, (self.dragon,)): False
         }
         matches = _action_effects_match_possible_plan(
-            kill, possible_plan=possible_plan, actor=self.knight,
+            Kill, possible_plan=possible_plan, actor=self.knight,
             victim=self.dragon
         )
         self.assertTrue(matches)
@@ -314,7 +342,7 @@ class TestActionsThatMatchPossiblePlan(unittest.TestCase):
             (self.dragon, 'alive'): False
         }
         matches = _action_effects_match_possible_plan(
-            kill, possible_plan=possible_plan, actor=self.knight,
+            Kill, possible_plan=possible_plan, actor=self.knight,
             victim=self.knight
         )
         self.assertFalse(matches)

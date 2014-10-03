@@ -8,14 +8,13 @@ class Action(object):
 
     def __init__(self):
         if any(
-            [val is None for val in [
-                self.name, self.preconditions, self.effects]
+            [
+                val is None for val in [
+                    self.name, self.preconditions, self.effects
+                ]
             ]
         ):
             raise ValueError("precondtions and effects must be specified.")
-        self.name = name
-        self.preconditions = preconditions
-        self.effects = effects
 
     def __repr__(self):
         return "<%s>" % self.name
@@ -59,7 +58,7 @@ class Action(object):
             precondition, expected_value = precondition_tuple
             actual_value = precondition.evaluate(**all_objects)
             if expected_value != actual_value:
-                log.debug("MISMATCH: %s, expected: %s. actual: %s" %(
+                log.debug("MISMATCH: %s, expected: %s. actual: %s" % (
                     precondition, expected_value, actual_value)
                 )
                 all_preconditions_met = False

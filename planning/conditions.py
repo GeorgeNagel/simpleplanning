@@ -1,6 +1,3 @@
-import copy
-
-
 class ImpossibleException(Exception):
     pass
 

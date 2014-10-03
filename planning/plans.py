@@ -59,12 +59,12 @@ class PossiblePlan(object):
         # Update the conditions for what they would need to be before the
         # action was performed
         actor, action, objects_dict = action_tuple
-        preconditions = action.calculate_preconditions(
+        precondition_tuples = action.calculate_preconditions(
             actor=actor, **objects_dict
         )
-        for precondition in preconditions:
-            obj, attr_name, value = precondition
-            self.conditions[(obj, attr_name)] = value
+        for precondition_tuple in precondition_tuples:
+            condition, object_tuple, value = precondition_tuple
+            self.conditions[(condition, object_tuple)] = value
 
 
 def _create_initial_plan(goal):
@@ -158,12 +158,12 @@ def _actions_that_match_possible_plan(
     possible_previous_actions = []
     for action in available_actions:
         # log.debug("Testing action: %s" % action)
-        number_of_objects = len(action.objects)
+        number_of_objects = len(action.object_keys())
         # Permute over all possible objects for the action
         for tuple_of_objects in permutations(objects, number_of_objects):
             # log.debug("Object permutation: %s" % repr(tuple_of_objects))
             objects_dict = {}
-            for obj_name, obj in zip(action.objects, tuple_of_objects):
+            for obj_name, obj in zip(action.object_keys(), tuple_of_objects):
                 objects_dict[obj_name] = obj
             action_matches = _action_effects_match_possible_plan(
                 action, possible_plan, actor, **objects_dict)
