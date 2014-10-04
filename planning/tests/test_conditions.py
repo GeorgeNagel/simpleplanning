@@ -2,8 +2,7 @@ import unittest
 
 from planning.actions import Action
 from planning.agents import Agent
-from planning.conditions import (
-    Condition, Is, IsNot, ImpossibleException)
+from planning.conditions import Condition, Is
 
 
 class IsHungry(Condition):
@@ -80,25 +79,5 @@ class TestIsCondition(unittest.TestCase):
         agent_1 = Agent("first agent")
         agent_2 = Agent("second agent")
         one_is_two = Is([agent_1, agent_2])
-        self.assertRaises(
-            ImpossibleException,
-            one_is_two.evaluate
-        )
-
-
-class TestIsNotCondition(unittest.TestCase):
-    def test_not_equivalent(self):
-        agent_1 = Agent("first agent")
-        agent_2 = Agent("second agent")
-        one_is_not_two = IsNot([agent_1, agent_2])
-        result = one_is_not_two.evaluate()
-        self.assertTrue(result)
-
-    def test_equivalent(self):
-        """Evaluation should raise ImpossibleException."""
-        agent = Agent("test agent")
-        one_is_not_one = IsNot([agent, agent])
-        self.assertRaises(
-            ImpossibleException,
-            one_is_not_one.evaluate
-        )
+        result = one_is_two.evaluate()
+        self.assertFalse(result)

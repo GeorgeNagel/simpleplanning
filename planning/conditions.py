@@ -1,7 +1,3 @@
-class ImpossibleException(Exception):
-    pass
-
-
 class Condition(object):
     # Name of the condition
     name = None
@@ -59,15 +55,4 @@ class Is(Condition):
         if self.objects[0] == self.objects[1]:
             return True
         else:
-            raise ImpossibleException
-
-
-class IsNot(Condition):
-    name = 'is not'
-    number_of_objects = 2
-
-    def evaluate(self):
-        if self.objects[0] != self.objects[1]:
-            return True
-        else:
-            raise ImpossibleException
+            return False

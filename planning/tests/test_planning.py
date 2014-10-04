@@ -1,7 +1,7 @@
 import unittest
 
 from planning.actions import Action
-from planning.conditions import Condition
+from planning.conditions import Condition, Is
 from planning.goals import Goal
 from planning.plans import (
     PossiblePlan, select_plan, breadth_first_plan_search,
@@ -74,7 +74,8 @@ class StealSword(Action):
     number_of_objects = 1
     preconditions = [
         (HasSword, 'victim', True),
-        (HasSword, 'actor', False)
+        (HasSword, 'actor', False),
+        (Is, ('victim', 'actor'), False)
     ]
     effects = [
         (HasSword, 'victim', False),
@@ -87,7 +88,8 @@ class GiveSword(Action):
     number_of_objects = 1
     preconditions = [
         (HasSword, 'friend', False),
-        (HasSword, 'actor', True)
+        (HasSword, 'actor', True),
+        (Is, ('friend', 'actor'), False)
     ]
     effects = [
         (HasSword, 'friend', True),
@@ -307,6 +309,7 @@ class TestPossiblePlan(unittest.TestCase):
         self.assertEqual(
             possible_plan.conditions,
             {
+                (Is, (lancelot, arthur)): False,
                 (HasSword, (lancelot,)): True,
                 (HasSword, (arthur,)): False,
                 (IsAlive, (guenivere,)): True
