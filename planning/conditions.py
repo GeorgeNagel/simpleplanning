@@ -29,7 +29,6 @@ class Condition(object):
 
         self.objects = objects
 
-
     def evaluate(self):
         """Evaluate the truth value of this condition."""
         # Raise ImpossibleException if the condition evaluated on these objects
@@ -45,6 +44,9 @@ class Condition(object):
         objects_tuple = tuple(self.objects)
         _planning_tuple = (self.__class__, objects_tuple)
         return _planning_tuple
+
+    def __repr__(self):
+        return "%s, %s" % (self.name, self.objects)
 
 
 class Is(Condition):

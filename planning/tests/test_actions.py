@@ -7,7 +7,7 @@ from planning.conditions import Condition, Is
 
 # Test-related conditions
 class HasSword(Condition):
-    name = 'is hungry'
+    name = 'has sword'
     number_of_objects = 1
 
     def evaluate(self):
@@ -19,7 +19,7 @@ class HasSword(Condition):
 
 
 class IsAlive(Condition):
-    name = 'is hungry'
+    name = 'is alive'
     number_of_objects = 1
 
     def evaluate(self):

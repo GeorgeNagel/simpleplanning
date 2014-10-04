@@ -17,7 +17,7 @@ class IsHungry(Condition):
             return False
 
 class HasSword(Condition):
-    name = 'is hungry'
+    name = 'has sword'
     number_of_objects = 1
 
     def evaluate(self):
