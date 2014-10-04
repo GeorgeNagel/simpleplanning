@@ -4,6 +4,7 @@ from planning.agents import Agent
 from planning.conditions import Condition
 from planning.goals import Goal, generate_goal
 
+
 # Test Condition
 class IsHungry(Condition):
     name = 'is hungry'

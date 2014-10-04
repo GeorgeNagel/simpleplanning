@@ -2,7 +2,7 @@ import unittest
 
 from planning.actions import Action
 from planning.agents import Agent
-from planning.conditions import Condition, Is
+from planning.conditions import Condition
 
 
 # Test-related conditions
@@ -23,7 +23,6 @@ class IsAlive(Condition):
     number_of_objects = 1
 
     def evaluate(self):
-        import logging
         obj = self.objects[0]
         if hasattr(obj, 'alive'):
             return obj.alive

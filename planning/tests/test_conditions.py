@@ -1,6 +1,5 @@
 import unittest
 
-from planning.actions import Action
 from planning.agents import Agent
 from planning.conditions import Condition, Is
 
@@ -16,6 +15,7 @@ class IsHungry(Condition):
         else:
             return False
 
+
 class HasSword(Condition):
     name = 'has sword'
     number_of_objects = 1
@@ -26,6 +26,7 @@ class HasSword(Condition):
             return eater_obj.has_sword
         else:
             return False
+
 
 class TestCondition(unittest.TestCase):
     """Test the Condition class."""

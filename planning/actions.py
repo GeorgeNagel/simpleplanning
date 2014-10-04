@@ -61,15 +61,15 @@ class Action(object):
         # Check all the preconditions
         all_preconditions_met = True
         for precondition_tuple in cls.preconditions:
-            precondition_class, object_names, expected_value = precondition_tuple
+            condition_class, object_names, expected_value = precondition_tuple
             if isinstance(object_names, basestring):
                 object_names = [object_names]
             objects_list = [all_objects[name] for name in object_names]
-            condition_inst = precondition_class(objects_list)
+            condition_inst = condition_class(objects_list)
             actual_value = condition_inst.evaluate()
             if expected_value != actual_value:
                 log.debug("MISMATCH: %s, expected: %s. actual: %s" % (
-                    precondition_class, expected_value, actual_value)
+                    condition_class, expected_value, actual_value)
                 )
                 all_preconditions_met = False
                 break

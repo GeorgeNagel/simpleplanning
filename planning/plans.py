@@ -189,21 +189,3 @@ def _action_effects_match_possible_plan(
             some_effects_match = True
     action_matches = (some_effects_match and not effects_contradict)
     return action_matches
-
-
-def _action_preconditions_possible(
-        action, possible_plan=None, actor=None, **objects):
-    """Check that the action is possible."""
-    any_conditions_impossible = False
-    for condition_tuple in action.preconditions:
-        condition_class, objects_tuple = condition_tuple
-        condition_instance = condition_class(objects_tuple)
-        try:
-            condition_instance.evaluate()
-        except ImpossibleException:
-            any_conditions_impossible = True
-            break
-    if any_conditions_impossible:
-        return False
-    else:
-        return True
