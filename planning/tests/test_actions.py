@@ -2,7 +2,7 @@ import unittest
 
 from planning.actions import Action
 from planning.agents import Agent
-from planning.conditions import Condition
+from planning.conditions import Condition, IsNot, ImpossibleException
 
 
 # Test-related conditions
@@ -122,3 +122,27 @@ class TestActions(unittest.TestCase):
             preconditions,
             [(IsAlive, (self.object,), True)]
         )
+
+
+class TestActOnSelf(unittest.TestCase):
+    def test_act_on_self(self):
+        """Test preconditions on a case where the object is the actor."""
+        test_agent = Agent('test agent')
+        class StealSword(Action):
+            name = 'steal sword'
+            number_of_objects = 1
+            preconditions = [
+                (HasSword, 'victim', True),
+                (HasSword, 'actor', False),
+                (IsNot, ('actor', 'victim'), True)
+            ]
+            effects = [
+                (HasSword, 'victim', False),
+                (HasSword, 'actor', True)
+            ]
+
+        self.assertRaises(
+            ImpossibleException,
+            StealSword.calculate_effects,
+            actor=test_agent,
+            victim=test_agent)

@@ -24,18 +24,14 @@ class PossiblePlan(object):
         )
 
     def matches_initial_conditions(self):
-        """Check if a possible plan matches initial conditions.
-
-        PARAMETERS:
-        * possible_plan - A PossiblePlan object.
-        * actor - The agent planning.
-        * objects - A list of possible objects.
-        """
+        """Check if a possible plan matches initial conditions."""
         all_conditions_match = True
-        for condition in self.conditions:
-            obj, attr_name = condition
-            attr_value = self.conditions[condition]
-            if getattr(obj, attr_name) != attr_value:
+        for condition_tuple in self.conditions:
+            condition_class, objects_tuple = condition_tuple
+            condition_instance = condition_class(list(objects_tuple))
+            expected_value = self.conditions[condition_tuple]
+            actual_value = condition_instance.evaluate()
+            if expected_value != actual_value:
                 all_conditions_match = False
         return all_conditions_match
 
@@ -70,9 +66,8 @@ class PossiblePlan(object):
 def _create_initial_plan(goal):
     """Set up the conditions for the initial_plan."""
     initial_plan = PossiblePlan()
-    initial_plan.conditions[(goal.goal_obj, goal.goal_attr_name)] = (
-        goal.goal_value
-    )
+    goal_condition = goal._goal_condition
+    initial_plan.conditions[goal_condition.planning_tuple] = goal.goal_value
     return initial_plan
 
 
@@ -182,7 +177,7 @@ def _action_effects_match_possible_plan(
     )
     # No effects may contradict conditions of the possible plan
     # but at least some of the effects should match
-    all_effects_match = True
+    effects_contradict = False
     some_effects_match = False
     for condition in action_effects:
         value = action_effects[condition]
@@ -190,7 +185,25 @@ def _action_effects_match_possible_plan(
             if possible_plan.conditions[condition] != value:
                 # An effect of this action does not match
                 # the conditions of the possible plan
-                all_effects_match = False
+                effects_contradict = True
             some_effects_match = True
-    action_matches = (all_effects_match and some_effects_match)
+    action_matches = (some_effects_match and not effects_contradict)
     return action_matches
+
+
+def _action_preconditions_possible(
+        action, possible_plan=None, actor=None, **objects):
+    """Check that the action is possible."""
+    any_conditions_impossible = False
+    for condition_tuple in action.preconditions:
+        condition_class, objects_tuple = condition_tuple
+        condition_instance = condition_class(objects_tuple)
+        try:
+            condition_instance.evaluate()
+        except ImpossibleException:
+            any_conditions_impossible = True
+            break
+    if any_conditions_impossible:
+        return False
+    else:
+        return True
