@@ -102,10 +102,14 @@ conditions = [HasSword, IsAlive]
 # Create goals for each agent
 for agent in agents:
     agent._goal = generate_goal(conditions, agents)
-    print "%s's goal: %s" % (agent, agent._goal)
+    print "%s's goal: %s" % (agent._name, agent._goal)
+
+MAX_TURNS = 20
 
 game_over = False
+number_of_turns = 0
 while not game_over:
+    number_of_turns += 1
     # Each agent takes a turn
     for agent in agents:
         print "%s's turn." % agent._name
@@ -115,13 +119,27 @@ while not game_over:
         if actions_sequence:
             next_action = actions_sequence[0]
         else:
-            print "%s's goal is satisfied." % agent._name
+            print "%s's goal is already satisfied." % agent._name
             game_over = True
             break
-        print "NEXT ACTION: %s" % repr(next_action)
         actor, action, objects_dict = next_action
         # Perform the next action in the plan
         action.apply_action(actor=agent, **objects_dict)
-        print "%s performs %s on %s" % (agent, action.name, objects_dict)
-        if any(not agent.alive for agent in agents):
+        print "%s performs %s on %s" % (agent._name, action.name, objects_dict)
+        
+        # Check for game-ending conditions
+        for agent in agents:
+            if not agent.alive:
+                print "%s is dead." % agent._name
+                game_over = True
+                break
+        for agent in agents:
+            if agent._goal.is_satisfied():
+                print "%s's goal is satisfied." % agent._name
+                game_over = True
+                break
+        if number_of_turns > MAX_TURNS:
+            print "Game concluded with no winner."
             game_over = True
+        if game_over:
+            break
